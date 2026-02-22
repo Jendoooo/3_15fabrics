@@ -412,6 +412,33 @@
 
 ---
 
+## GEMINI — Batch 6 — Assigned 2026-02-22
+
+- [ ] **TASK G18:** Add default product variants to all variant-less products.
+  Many Instagram-imported products have no variants (0 rows in `product_variants`), which means the cart can only add them with `variant_id: 'default'`. Create a script `scripts/seed_default_variants.js` that:
+  1. Finds all active products with 0 variants
+  2. Inserts a default variant `{ color: 'Standard', size: null, stock_quantity: 50 }` for each
+  3. Logs the count
+  Run the script after creating it.
+
+- [ ] **TASK G19:** Update the contact page with TikTok + Facebook links.
+  **File:** `src/app/(site)/contact/page.tsx` — read first.
+  Add TikTok and Facebook social links alongside existing Instagram and WhatsApp:
+  - TikTok: `https://www.tiktok.com/@315fabrics`
+  - Facebook: `https://web.facebook.com/profile.php?id=100057922604897`
+  Keep the same card layout. Add 2 new contact cards for TikTok and Facebook.
+
+- [ ] **TASK G20:** End-to-end checkout flow test.
+  **Pre-req:** Paystack test keys must be in `.env.local` (they are — from IBY Closet).
+  1. Start the dev server (`npm run dev`)
+  2. Navigate to a product page, add to cart, go to checkout
+  3. Verify the checkout form renders, Paystack payment modal loads
+  4. Test with Paystack test card: `4084 0840 8408 4081`, any future expiry, any CVV
+  5. Verify order confirmation page shows
+  6. Report any errors or issues found
+
+---
+
 ## CLAUDE — Audits + Architecture
 
 - [x] Fork from iby_closet, audit full codebase | Done: 2026-02-22

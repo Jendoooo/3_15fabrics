@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import ProductCard from '@/components/ProductCard';
 import FadeIn from '@/components/FadeIn';
 import { supabaseServer } from '@/lib/supabase';
@@ -8,7 +9,7 @@ import type { Category, Product, ProductImage } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 type FeaturedProduct = Pick<Product, 'id' | 'name' | 'slug' | 'price'>;
-type FabricCategory = Pick<Category, 'id' | 'name' | 'slug'>;
+type FabricCategory = Pick<Category, 'id' | 'name' | 'slug'> & { image_url: string | null };
 type ProductPrimaryImage = Pick<ProductImage, 'product_id' | 'image_url' | 'sort_order'>;
 
 export default async function Home() {
@@ -50,7 +51,7 @@ export default async function Home() {
 
         const { data: featuredCategories } = await supabaseServer
           .from('categories')
-          .select('id, name, slug')
+          .select('id, name, slug, image_url')
           .order('sort_order', { ascending: true })
           .limit(6);
 
@@ -156,14 +157,31 @@ export default async function Home() {
               All Categories
             </Link>
           </div>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-8">
             {categories.map((category) => (
               <article key={category.id} className="group">
                 <Link href={`/shop/${category.slug}`} className="block">
-                  <div className="flex aspect-video items-center justify-center bg-brand-dark border border-transparent transition-all duration-300 group-hover:scale-[1.02] group-hover:border-brand-gold">
-                    <h3 className="text-sm uppercase tracking-widest text-white text-center">
-                      {category.name}
-                    </h3>
+                  <div className="relative aspect-[4/5] overflow-hidden">
+                    {category.image_url ? (
+                      <Image
+                        src={category.image_url}
+                        alt={category.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-brand-dark" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
+                      <h3 className="text-xs uppercase tracking-widest text-white md:text-sm">
+                        {category.name}
+                      </h3>
+                      <span className="mt-1 block text-xs uppercase tracking-widest text-brand-gold transition-all group-hover:translate-x-1">
+                        Shop &rarr;
+                      </span>
+                    </div>
                   </div>
                 </Link>
               </article>
