@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Lookbook — 315 Fabrics',
-  description: 'Campaign photography and editorial content from 315 Fabrics. Coming soon.',
+  title: 'Lookbook — 3:15 Fabrics',
+  description: 'Campaign photography and editorial content from 3:15 Fabrics. Coming soon.',
 };
 
 export default function LookbookPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-black px-6 text-center text-white">
-      <p className="mb-6 text-[10px] uppercase tracking-[0.5em] text-neutral-600">315 Fabrics</p>
+      <p className="mb-6 text-[10px] uppercase tracking-[0.5em] text-neutral-600">3:15 Fabrics</p>
       <h1 className="text-4xl font-light uppercase tracking-[0.3em] text-white md:text-6xl">
         The Lookbook
       </h1>

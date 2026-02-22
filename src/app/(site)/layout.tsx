@@ -9,12 +9,12 @@ import BackToTop from '@/components/BackToTop';
 
 export const metadata: Metadata = {
   title: {
-    default: '315 Fabrics',
-    template: '%s — 315 Fabrics',
+    default: '3:15 Fabrics',
+    template: '%s — 3:15 Fabrics',
   },
   description: 'Premium asoebi fabrics — Ankara, French Lace, Swiss Voile, Aso-Oke, Senator and more. Based in Epe, Lagos. Shop online.',
   openGraph: {
-    siteName: '315 Fabrics',
+    siteName: '3:15 Fabrics',
     locale: 'en_NG',
   },
 };

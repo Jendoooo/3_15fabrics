@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
         // 2. Send WhatsApp Recovery via Fonnte
         if (whatsapp_number && process.env.NEXT_PUBLIC_FONNTE_TOKEN) {
-            const message = `Hi from 315 Fabrics! We noticed you left some items in your cart. You can complete your purchase securely by returning to your cart: ${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/cart`;
+            const message = `Hi from 3:15 Fabrics! We noticed you left some items in your cart. You can complete your purchase securely by returning to your cart: ${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/cart`;
 
             try {
                 await fetch('https://api.fonnte.com/send', {

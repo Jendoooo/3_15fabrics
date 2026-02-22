@@ -13,7 +13,7 @@ const WA_STATUS_MESSAGES: Record<string, string> = {
   confirmed: 'has been confirmed and is being prepared',
   processing: 'is being packed and prepared for shipment',
   shipped: '🚚 has been SHIPPED and is on its way to you',
-  delivered: '✅ has been DELIVERED. Thank you for shopping with 315 Fabrics!',
+  delivered: '✅ has been DELIVERED. Thank you for shopping with 3:15 Fabrics!',
   cancelled: 'has been cancelled. Please contact us if you have questions.',
 };
 
@@ -79,7 +79,7 @@ export async function PATCH(
       const statusText = WA_STATUS_MESSAGES[status] ?? `has been updated to: ${status}`;
       const firstName = (order.customer_name ?? 'there').split(' ')[0];
       const message = [
-        `Hi ${firstName}! Your 315 Fabrics order *${order.order_number}* ${statusText}.`,
+        `Hi ${firstName}! Your 3:15 Fabrics order *${order.order_number}* ${statusText}.`,
         note?.trim() ? `\n📝 Note: ${note.trim()}` : '',
         `\nTrack your order: ${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/track?order=${order.order_number}`,
       ].join('');

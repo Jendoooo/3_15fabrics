@@ -37,8 +37,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     return { title: 'Collection Not Found' };
   }
 
-  const title = `${collection.name} — 315 Fabrics`;
-  const description = (collection.description ?? `Explore the ${collection.name} collection at 315 Fabrics`).substring(0, 160);
+  const title = `${collection.name} — 3:15 Fabrics`;
+  const description = (collection.description ?? `Explore the ${collection.name} collection at 3:15 Fabrics`).substring(0, 160);
 
   return {
     title,

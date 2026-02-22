@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-black px-6">
       <div className="w-full max-w-sm">
         <h1 className="mb-2 text-center text-2xl font-light uppercase tracking-widest text-white">
-          315 Fabrics
+          3:15 Fabrics
         </h1>
         <p className="mb-10 text-center text-xs uppercase tracking-widest text-neutral-500">Admin</p>
 

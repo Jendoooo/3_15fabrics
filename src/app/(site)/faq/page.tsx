@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'FAQ',
-  description: 'Frequently asked questions about orders, shipping, sizing, returns, and payments at 315 Fabrics.',
+  description: 'Frequently asked questions about orders, shipping, sizing, returns, and payments at 3:15 Fabrics.',
 };
 
 const faqs = [

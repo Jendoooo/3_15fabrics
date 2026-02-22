@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Our Story — 315 Fabrics',
+  title: 'Our Story — 3:15 Fabrics',
   description:
     'Premium asoebi fabrics from Epe, Lagos. Founded by Ayodeji Modinat Ayeola-Musari — over 8 years in the fabric business.',
 };
@@ -25,7 +25,7 @@ export default function BrandPage() {
       {/* Intro */}
       <section className="mx-auto max-w-3xl px-6 py-20 text-center md:px-12">
         <p className="text-lg leading-relaxed text-neutral-700 md:text-xl">
-          <strong className="font-semibold text-black">315 Fabrics</strong> is a fabric store
+          <strong className="font-semibold text-black">3:15 Fabrics</strong> is a fabric store
           based in Epe, Lagos, founded by{' '}
           <strong className="font-semibold text-black">Ayodeji Modinat Ayeola-Musari</strong>.
           With over 8 years in the fabric business, Ayodeji has built a reputation for sourcing
@@ -41,7 +41,7 @@ export default function BrandPage() {
             The Vision
           </h2>
           <p className="mb-4 text-sm leading-relaxed text-neutral-600">
-            Every great outfit starts with great fabric. At 315 Fabrics, we believe that the
+            Every great outfit starts with great fabric. At 3:15 Fabrics, we believe that the
             right material — the right weight, the right weave, the right colour — transforms
             a garment from ordinary to unforgettable.
           </p>

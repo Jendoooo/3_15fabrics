@@ -9,7 +9,7 @@ const playfairDisplay = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: '315 Fabrics',
+  title: '3:15 Fabrics',
   description: 'Premium asoebi fabrics — Ankara, French Lace, Swiss Voile, Aso-Oke, Senator and more. Based in Epe, Lagos. Shop online.',
   icons: {
     icon: '/logo-black.png',

@@ -78,12 +78,12 @@ export default async function Home() {
           Est. Epe, Lagos
         </p>
         <h1 className="font-display font-light uppercase leading-none tracking-[0.08em] text-brand-dark text-[clamp(3rem,11vw,8rem)]">
-          315 Fabrics
+          3:15 Fabrics
         </h1>
         <p className="mt-6 max-w-md text-lg font-display italic text-brand-earth">
           Every great outfit starts with great fabric
         </p>
-        <p className="mt-3 text-xs uppercase tracking-[0.3em] text-brand-gold/70">
+        <p className="mt-3 text-xs uppercase tracking-[0.3em] text-brand-gold">
           Curated by Ayodeji &mdash; Epe, Lagos
         </p>
         <div className="mt-12 flex flex-col gap-4 sm:flex-row">
@@ -177,21 +177,39 @@ export default async function Home() {
         </FadeIn>
       </section>
 
-      {/* Instagram CTA */}
+      {/* Social CTA */}
       <section className="bg-brand-dark py-20 text-center text-white">
         <FadeIn>
-          <h2 className="text-2xl font-display font-light uppercase tracking-widest">Follow Us on Instagram</h2>
+          <h2 className="text-2xl font-display font-light uppercase tracking-widest text-brand-gold">Follow Us Everywhere</h2>
           <p className="mt-4 text-sm text-neutral-400">
-            New fabrics, asoebi sets, and behind-the-scenes — first on Instagram.
+            New fabrics, asoebi sets, and behind-the-scenes — follow us on all platforms.
           </p>
-          <a
-            href="https://instagram.com/3_15fabrics"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-8 inline-block border border-brand-gold px-8 py-3 text-sm uppercase tracking-widest text-brand-gold transition-colors hover:bg-brand-gold hover:text-white"
-          >
-            @3_15fabrics
-          </a>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <a
+              href="https://instagram.com/3_15fabrics"
+              target="_blank"
+              rel="noreferrer"
+              className="border border-brand-gold px-6 py-3 text-sm uppercase tracking-widest text-brand-gold transition-colors hover:bg-brand-gold hover:text-white"
+            >
+              Instagram
+            </a>
+            <a
+              href="https://www.tiktok.com/@315fabrics"
+              target="_blank"
+              rel="noreferrer"
+              className="border border-brand-gold px-6 py-3 text-sm uppercase tracking-widest text-brand-gold transition-colors hover:bg-brand-gold hover:text-white"
+            >
+              TikTok
+            </a>
+            <a
+              href="https://web.facebook.com/profile.php?id=100057922604897"
+              target="_blank"
+              rel="noreferrer"
+              className="border border-brand-gold px-6 py-3 text-sm uppercase tracking-widest text-brand-gold transition-colors hover:bg-brand-gold hover:text-white"
+            >
+              Facebook
+            </a>
+          </div>
         </FadeIn>
       </section>
     </main>

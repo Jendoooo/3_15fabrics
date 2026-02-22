@@ -434,6 +434,24 @@ export default function YardageGuidePage() { ... }
 - **Tricky parts:** Ensuring query-string preservation across both gender and sort controls without introducing client state.
 - **What Claude should verify:** Confirm sort pill links produce expected URL combinations (`/shop`, `/shop?sort=price-asc`, `/shop?gender=women&sort=price-desc`) and that server-side ordering reflects each selection.
 
+### [C11] - Warm earth-tone brand palette | Done: 2026-02-22 11:26
+- **What I did:** Extended `tailwind.config.ts` with `brand` color tokens (`earth`, `gold`, `cream`, `forest`, `dark`) and `fontFamily.display`; confirmed `src/app/globals.css` includes the Playfair Display import and warm root variables; updated `src/app/layout.tsx` to keep `Inter` for body while adding `Playfair Display` via `next/font/google` variable (`--font-display`) used by `font-display`.
+- **Why I approached it this way:** This keeps body typography stable and introduces display typography as an opt-in class so headings can switch cleanly without global regressions.
+- **Tricky parts:** Ensuring the Tailwind `font-display` utility resolves to the runtime-loaded Playfair font required pairing theme config with a layout-level CSS variable.
+- **What Claude should verify:** Confirm brand color utilities resolve in production build and `font-display` headings render in Playfair while body text remains Inter.
+
+### [C12] - Homepage hero warm redesign | Done: 2026-02-22 11:26
+- **What I did:** Updated `src/app/(site)/page.tsx` hero and supporting sections to the warm brand treatment: cream hero, `font-display` title, required subtitle text, founder credit in gold, forest/gold CTA buttons, gold-accent pillar strip, category card hover border in gold, and dark Instagram CTA with gold accents.
+- **Why I approached it this way:** I preserved existing server data-fetching and section structure, changing only visual system classes and static copy to satisfy the redesign brief with minimal behavioral risk.
+- **Tricky parts:** Balancing stronger brand styling while keeping existing responsive structure and current content blocks intact.
+- **What Claude should verify:** Confirm hero hierarchy/contrast at mobile and desktop widths, and verify category-card and Instagram CTA accent behavior matches the new palette.
+
+### [C13] - ProductCard and chrome warm tones | Done: 2026-02-22 11:26
+- **What I did:** Updated `src/components/ProductCard.tsx` no-image state to a `bg-brand-cream` placeholder with centered `"No Image"` text; verified `src/components/Header.tsx` uses `bg-brand-cream/95` and `bg-brand-dark` mobile menu; verified `src/components/Footer.tsx` uses `bg-brand-dark` with section headings styled as `text-brand-gold`.
+- **Why I approached it this way:** The task scoped visual updates to empty-state and shell components, so I kept interaction/data behavior unchanged and applied only class-level styling adjustments.
+- **Tricky parts:** Avoiding side effects on hover animation and card aspect ratio while replacing the fallback state copy/design.
+- **What Claude should verify:** Confirm no-image cards retain identical sizing/spacing to imaged cards and validate header/footer contrast with the new palette.
+
 ---
 
 ### [C10] - Replace Application Logo | Done: 2026-02-22 10:28

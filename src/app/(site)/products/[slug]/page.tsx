@@ -73,8 +73,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const { data: images } = await getProductImages(product.id);
   const primaryImage = images?.find((img) => img.is_primary)?.image_url ?? images?.[0]?.image_url ?? null;
 
-  const title = `${product.name} — 315 Fabrics`;
-  const description = (product.description ?? `Shop ${product.name} at 315 Fabrics`).substring(0, 160);
+  const title = `${product.name} — 3:15 Fabrics`;
+  const description = (product.description ?? `Shop ${product.name} at 3:15 Fabrics`).substring(0, 160);
 
   return {
     title,

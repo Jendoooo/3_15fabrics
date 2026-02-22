@@ -3,7 +3,7 @@
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Instagram, MessageCircle } from 'lucide-react';
+import { Instagram, MessageCircle, Facebook } from 'lucide-react';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -63,10 +63,16 @@ export default function Footer() {
             Premium fabrics, sourced from around the world. Based in Epe, Lagos.
           </p>
           <div className="flex gap-4">
-            <a href="https://instagram.com/3_15fabrics" target="_blank" rel="noreferrer" aria-label="Instagram" className="text-white hover:text-neutral-400 transition-colors">
+            <a href="https://instagram.com/3_15fabrics" target="_blank" rel="noreferrer" aria-label="Instagram" className="text-white hover:text-brand-gold transition-colors">
               <Instagram size={18} />
             </a>
-            <a href="https://wa.me/2349066609177" target="_blank" rel="noreferrer" aria-label="WhatsApp" className="text-white hover:text-neutral-400 transition-colors">
+            <a href="https://www.tiktok.com/@315fabrics" target="_blank" rel="noreferrer" aria-label="TikTok" className="text-white hover:text-brand-gold transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9a6.33 6.33 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15.3a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.75a8.18 8.18 0 0 0 4.76 1.52V6.84a4.84 4.84 0 0 1-1-.15z" /></svg>
+            </a>
+            <a href="https://web.facebook.com/profile.php?id=100057922604897" target="_blank" rel="noreferrer" aria-label="Facebook" className="text-white hover:text-brand-gold transition-colors">
+              <Facebook size={18} />
+            </a>
+            <a href="https://wa.me/2349066609177" target="_blank" rel="noreferrer" aria-label="WhatsApp" className="text-white hover:text-brand-gold transition-colors">
               <MessageCircle size={18} />
             </a>
           </div>
@@ -139,7 +145,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="mx-auto mt-16 flex max-w-7xl items-center justify-between border-t border-white/10 pt-8 text-xs text-neutral-500">
-        <p>© {new Date().getFullYear()} 315 Fabrics. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} 3:15 Fabrics. All rights reserved.</p>
         <p>Epe, Lagos</p>
       </div>
     </footer>
