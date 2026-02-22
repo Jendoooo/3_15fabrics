@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     try {
         // 1) Auth check
         const cookieStore = cookies();
-        const adminSession = cookieStore.get('iby_admin_session')?.value;
+        const adminSession = cookieStore.get('315fabrics_admin_session')?.value;
 
         if (!adminSession || adminSession !== process.env.ADMIN_SESSION_SECRET) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
         const uploadResult = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
                 {
-                    folder: 'iby_closet/products',
+                    folder: '315fabrics/products',
                 },
                 (error, result) => {
                     if (error || !result) {

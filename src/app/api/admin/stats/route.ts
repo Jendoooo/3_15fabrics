@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
     try {
         const cookieStore = cookies();
-        const adminSession = cookieStore.get('iby_admin_session')?.value;
+        const adminSession = cookieStore.get('315fabrics_admin_session')?.value;
 
         if (!adminSession || adminSession !== process.env.ADMIN_SESSION_SECRET) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

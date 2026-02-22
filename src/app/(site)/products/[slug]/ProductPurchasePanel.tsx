@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 
 import { useCartStore } from '@/lib/cart-store';
@@ -19,6 +19,8 @@ type ProductPurchasePanelProps = {
   productStatus: string;
   primaryImageUrl: string | null;
   variants: VariantOption[];
+  unitType: 'yard' | 'bundle';
+  minimumQuantity: number;
 };
 
 export default function ProductPurchasePanel({
@@ -28,10 +30,11 @@ export default function ProductPurchasePanel({
   productStatus,
   primaryImageUrl,
   variants,
+  unitType,
+  minimumQuantity,
 }: ProductPurchasePanelProps) {
   const params = useParams<{ slug: string | string[] }>();
   const addItem = useCartStore((state) => state.addItem);
-  const cartItems = useCartStore((state) => state.items);
   const productSlug = Array.isArray(params.slug) ? (params.slug[0] ?? '') : (params.slug ?? '');
 
   const inStockVariants = useMemo(
@@ -39,7 +42,7 @@ export default function ProductPurchasePanel({
     [variants]
   );
   const hasNoVariants = variants.length === 0;
-  const hasNoInStockVariants = variants.length > 0 && inStockVariants.length === 0;
+  const hasNoInStockVariants = !hasNoVariants && inStockVariants.length === 0;
   const hasOutOfStockVariant = variants.some((variant) => variant.stock_quantity === 0);
   const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '').replace(/\D/g, '');
   const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
@@ -47,47 +50,46 @@ export default function ProductPurchasePanel({
   )}`;
 
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
-    inStockVariants[0]?.id ?? null
+    inStockVariants[0]?.id ?? variants[0]?.id ?? null
   );
-  const [quantity, setQuantity] = useState(1);
-  const [justAdded, setJustAdded] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [yards, setYards] = useState<number>(minimumQuantity);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setSelectedVariantId((currentVariantId) => {
+      if (currentVariantId && variants.some((variant) => variant.id === currentVariantId)) {
+        return currentVariantId;
+      }
+
+      return inStockVariants[0]?.id ?? variants[0]?.id ?? null;
+    });
+  }, [inStockVariants, variants]);
 
   const selectedVariant = useMemo(
     () => variants.find((variant) => variant.id === selectedVariantId) ?? null,
     [selectedVariantId, variants]
   );
 
-  // Check if the selected variant is already in cart
-  const variantInCart = useMemo(
-    () => cartItems.find((item) => item.variant_id === selectedVariantId),
-    [cartItems, selectedVariantId]
+  const maxYards = useMemo(
+    () => Math.max(minimumQuantity, selectedVariant?.stock_quantity ?? minimumQuantity),
+    [minimumQuantity, selectedVariant]
   );
 
-  const maxQuantity = selectedVariant
-    ? Math.min(selectedVariant.stock_quantity, 10)
-    : 1;
+  useEffect(() => {
+    if (unitType === 'bundle') {
+      setYards(1);
+      return;
+    }
 
+    setYards((currentYards) => Math.min(Math.max(currentYards, minimumQuantity), maxYards));
+  }, [maxYards, minimumQuantity, selectedVariantId, unitType]);
+
+  const hasInsufficientStockForMinimum =
+    unitType === 'yard' && !!selectedVariant && selectedVariant.stock_quantity < minimumQuantity;
   const isSoldOut =
-    productStatus === 'sold_out' || !selectedVariant || selectedVariant.stock_quantity <= 0;
-
-  // Reset quantity when variant changes
-  useEffect(() => {
-    setQuantity(1);
-    setJustAdded(false);
-  }, [selectedVariantId]);
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
-    };
-  }, []);
+    productStatus === 'sold_out' ||
+    !selectedVariant ||
+    selectedVariant.stock_quantity <= 0 ||
+    hasInsufficientStockForMinimum;
 
   const handleAddToCart = useCallback(() => {
     if (!selectedVariant || isSoldOut) {
@@ -99,18 +101,27 @@ export default function ProductPurchasePanel({
       slug: productSlug,
       variant_id: selectedVariant.id,
       product_name: productName,
-      size: selectedVariant.size ?? 'One Size',
+      size: '',
       color: selectedVariant.color ?? 'Default',
       unit_price: unitPrice,
-      quantity,
+      quantity: unitType === 'bundle' ? 1 : yards,
       image_url: primaryImageUrl ?? '',
+      unit_type: unitType,
+      minimum_quantity: minimumQuantity,
     });
-
-    // Show "Added ✓" feedback for 2.5 seconds
-    setJustAdded(true);
-    if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
-    addedTimerRef.current = setTimeout(() => setJustAdded(false), 2500);
-  }, [selectedVariant, isSoldOut, addItem, productId, productSlug, productName, unitPrice, quantity, primaryImageUrl]);
+  }, [
+    selectedVariant,
+    isSoldOut,
+    addItem,
+    productId,
+    productSlug,
+    productName,
+    unitPrice,
+    unitType,
+    yards,
+    primaryImageUrl,
+    minimumQuantity,
+  ]);
 
   if (hasNoVariants) {
     return (
@@ -127,21 +138,17 @@ export default function ProductPurchasePanel({
     );
   }
 
-  // Determine button label
-  let buttonLabel = 'Add to Cart';
-  if (isSoldOut) {
-    buttonLabel = 'Sold Out';
-  } else if (justAdded) {
-    buttonLabel = 'Added ✓';
-  } else if (mounted && variantInCart) {
-    buttonLabel = `In Cart (${variantInCart.quantity}) — Add More`;
-  }
+  const buttonLabel = isSoldOut
+    ? 'Sold Out'
+    : unitType === 'bundle'
+      ? 'Order This Bundle'
+      : 'Add to Cart';
+  const lineTotal = yards * unitPrice;
 
   return (
     <div className="space-y-6">
-      {/* Size selector */}
       <div>
-        <span className="mb-3 block text-sm uppercase tracking-wider">Size</span>
+        <span className="mb-3 block text-sm uppercase tracking-wider">Colourway</span>
         <div className="flex flex-wrap gap-3">
           {variants.map((variant) => {
             const isSelected = variant.id === selectedVariantId;
@@ -153,12 +160,13 @@ export default function ProductPurchasePanel({
                 type="button"
                 onClick={() => setSelectedVariantId(variant.id)}
                 disabled={isOutOfStock || productStatus === 'sold_out'}
-                className={`flex h-12 min-w-12 items-center justify-center border px-4 text-sm uppercase tracking-widest transition-colors ${isSelected
+                className={`min-w-24 border px-4 py-3 text-sm uppercase tracking-widest transition-colors ${
+                  isSelected
                     ? 'border-black bg-black text-white'
                     : 'border-black text-black hover:bg-black hover:text-white'
-                  } ${isOutOfStock || productStatus === 'sold_out' ? 'cursor-not-allowed opacity-50' : ''}`}
+                } ${isOutOfStock || productStatus === 'sold_out' ? 'cursor-not-allowed opacity-50' : ''}`}
               >
-                {variant.size ?? 'OS'}
+                {variant.color ?? 'Default'}
               </button>
             );
           })}
@@ -168,55 +176,55 @@ export default function ProductPurchasePanel({
         ) : null}
         {!hasNoInStockVariants && hasOutOfStockVariant ? (
           <p className="mt-3 text-xs uppercase tracking-widest text-neutral-500">
-            Out-of-stock sizes are disabled
-          </p>
-        ) : null}
-        {selectedVariant?.color ? (
-          <p className="mt-3 text-xs uppercase tracking-widest text-neutral-500">
-            Color: {selectedVariant.color}
+            Out-of-stock colourways are disabled
           </p>
         ) : null}
       </div>
 
-      {/* Quantity selector */}
-      {!isSoldOut && (
+      {unitType === 'yard' ? (
         <div>
-          <span className="mb-3 block text-sm uppercase tracking-wider">Quantity</span>
-          <div className="inline-flex items-center border border-black">
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              disabled={quantity <= 1}
-              className="flex h-12 w-12 items-center justify-center text-lg transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-30"
-              aria-label="Decrease quantity"
-            >
-              −
-            </button>
-            <span className="flex h-12 w-14 items-center justify-center border-x border-black text-sm font-medium tabular-nums">
-              {quantity}
-            </span>
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
-              disabled={quantity >= maxQuantity}
-              className="flex h-12 w-12 items-center justify-center text-lg transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-30"
-              aria-label="Increase quantity"
-            >
-              +
-            </button>
-          </div>
+          <label htmlFor="yards" className="mb-3 block text-sm uppercase tracking-wider">
+            Yards
+          </label>
+          <input
+            id="yards"
+            type="number"
+            min={minimumQuantity}
+            max={selectedVariant?.stock_quantity ?? minimumQuantity}
+            step={0.5}
+            value={yards}
+            onChange={(event) => {
+              const parsedValue = parseFloat(event.target.value);
+              if (Number.isNaN(parsedValue)) {
+                setYards(minimumQuantity);
+                return;
+              }
+
+              setYards(Math.min(Math.max(parsedValue, minimumQuantity), maxYards));
+            }}
+            disabled={isSoldOut}
+            className="w-full border border-black px-4 py-3 text-sm focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100"
+          />
+          <p className="mt-3 text-sm text-neutral-700">
+            {`${yards} yards x ₦${unitPrice.toLocaleString('en-NG')} = ₦${lineTotal.toLocaleString('en-NG')}`}
+          </p>
+          {selectedVariant ? (
+            <p className="mt-2 text-xs uppercase tracking-widest text-neutral-500">
+              {`${selectedVariant.stock_quantity} yards in stock`}
+            </p>
+          ) : null}
         </div>
+      ) : (
+        <p className="text-sm uppercase tracking-wider text-neutral-700">
+          {`Complete set - ${minimumQuantity} yards`}
+        </p>
       )}
 
-      {/* Add to Cart button */}
       <button
         type="button"
         disabled={isSoldOut}
         onClick={handleAddToCart}
-        className={`w-full py-4 text-sm uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600 ${justAdded
-            ? 'bg-green-700 text-white'
-            : 'bg-black text-white hover:bg-neutral-800'
-          }`}
+        className="w-full bg-black py-4 text-sm uppercase tracking-widest text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600"
       >
         {buttonLabel}
       </button>

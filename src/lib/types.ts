@@ -46,6 +46,10 @@ export type Product = {
     is_featured: boolean;
     status: string;
     created_at: string;
+    unit_type: string;
+    minimum_quantity: number;
+    fabric_type: string | null;
+    gender: 'men' | 'women' | 'unisex';
 };
 
 export type ProductImage = {
@@ -117,6 +121,7 @@ export type OrderItem = {
     color: string | null;
     quantity: number | null;
     unit_price: number | null;
+    yards_ordered: number | null;
 };
 
 export type DeliveryTracking = {

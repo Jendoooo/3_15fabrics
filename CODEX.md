@@ -7,101 +7,44 @@
 
 ---
 
-## ⚠ STANDING INSTRUCTION — Detailed Log File
-
-After completing each batch of tasks, append a section to **`CODEX_DETAILED.md`** (create it if it doesn't exist) at the project root. Format:
-
-```
-## Batch N — YYYY-MM-DD
-### Task CXX: Short Title
-**Objective:** ...
-**Implementation Details:**
-- Why you made each key decision
-- Edge cases you handled and how
-- Any patterns or gotchas
-- What you removed / replaced and why
-```
-
-This helps Claude audit your work faster without having to re-read all the code.
-
----
-
-## ⚠ NEW TASKS — Batch 10 (2026-02-22)
-
-You have 2 new tasks: **C31, C32**. Read `task.md` for full specs. Work order: **C31 → C32**.
-
-**Summary:**
-- **C31** — Lookbook page (`src/app/(site)/lookbook/page.tsx`): Full rewrite. Remove the Supabase `getLookbookImages()` call entirely. Define two static arrays (`EDITORIAL` 15 items, `PRODUCTS` 23 items) at the top of the file. Render a masonry gallery — editorial in 3 columns, products in 4 columns. Black bg, hero with `post_19.jpg` at `opacity-40`.
-- **C32** — Brand page (`src/app/(site)/brand/page.tsx`): Add missing `import Image from 'next/image'`. Replace the gradient div placeholder with `<Image src="/images/instagram/product_100.jpg" fill className="object-cover object-top" />`.
-
-**Critical image filenames — ONLY use these (all in `/images/instagram/`):**
-- Editorial: `post_0, post_1, post_4, post_5, post_7, post_8, post_10, post_12, post_14, post_16, post_18, post_19, post_20, post_22, post_24` (all `.jpg`)
-- Product: `product_100, 101, 102, 103, 104, 105, 106, 107, 114, 117, 119, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 132, 133` (all `.jpg`)
-- DO NOT reference: product_108–113, 115, 116, 118, 120, 131 — these files DO NOT EXIST
-
-**Key constraint for C31 — masonry + images:**
-- Use `width={600} height={800}` (NOT `fill`) for editorial masonry images
-- Use `width={400} height={500}` (NOT `fill`) for product masonry images
-- CSS `columns` layout does NOT work with Next.js `<Image fill>` — must use fixed width/height
-- Add `className="w-full object-cover"` to each image so it fills its column cell
-- Keep existing `metadata` export unchanged, keep as server component (no `'use client'`)
-
----
-
-## ⚠ PATH CHANGE — READ BEFORE CONTINUING
-
-Claude restructured the project between your sessions. Here is exactly what changed:
-
-**All customer-facing pages moved into a route group folder:**
-```
-OLD path                              NEW path
-src/app/shop/page.tsx           →   src/app/(site)/shop/page.tsx
-src/app/collections/page.tsx    →   src/app/(site)/collections/page.tsx
-src/app/products/[slug]/...     →   src/app/(site)/products/[slug]/...
-src/app/cart/page.tsx           →   src/app/(site)/cart/page.tsx
-src/app/checkout/page.tsx       →   src/app/(site)/checkout/page.tsx
-src/app/checkout/success/...    →   src/app/(site)/checkout/success/...
-src/app/track/page.tsx          →   src/app/(site)/track/page.tsx
-src/app/page.tsx                →   src/app/(site)/page.tsx
-```
-
-**Why:** The `(site)` is a Next.js route group — it does NOT change any URLs (`/shop` still works as `/shop`). It was needed so the admin panel (`src/app/admin/`) gets a completely separate layout with no Header/Footer.
-
-**What NOT to touch:**
-- `src/app/admin/` — Claude already built the admin panel. Do not edit these files.
-- `src/app/(site)/layout.tsx` — already exists with Header + Footer, do not create another one.
-- `src/app/layout.tsx` — root layout, already correct.
-
-**Your remaining tasks are C8, C9, C10 only** (C11 and C12 have been reassigned to Gemini).
-All three tasks already have the correct new file paths in `task.md`. Just read task.md and proceed.
-
----
-
 ## Your Role
 
-You are a **coding agent** for the iby_closet project. You implement assigned tasks from `task.md`.
+You are a **frontend coding agent** for the 315 Fabrics project. You implement assigned tasks from `task.md`.
 
 **Before starting any session:**
-1. Read this file top to bottom (especially the ⚠ section above)
-2. Read `task.md` — find your incomplete tasks, work top-to-bottom
-3. Read `context_window.md` if you need a fast project overview
+1. Read `CLAUDE.md` — full project brief, stack, schema, file structure
+2. Read `task.md` — find tasks assigned to CODEX, pick up the first incomplete one
+3. Read this file — see what you've done before and any blockers
 
 **After completing a task:**
 1. Mark it done in `task.md` — change `[ ]` to `[x]`, append `| Done: YYYY-MM-DD HH:MM`
-2. Log what you did in the Progress Log below
+2. Log what you did in the Progress Log below — **write detailed rationale, not just a summary**
+
+**Progress log format (required):**
+```
+### [Task ID] — [Task name] | Done: YYYY-MM-DD HH:MM
+- **What I did:** [files changed, components modified, state added]
+- **Why I approached it this way:** [key decisions — e.g. why server component vs client, why this layout]
+- **Tricky parts:** [edge cases, TypeScript challenges, hydration concerns]
+- **What Claude should verify:** [specific things worth double-checking in the UI or types]
+```
+This detail saves Claude tokens when auditing — the more specific you are, the faster the review.
 
 ---
 
 ## Project Context Quick Reference
 
+- **Brand:** 315 Fabrics — fabric store, Epe Lagos, Instagram @3_15fabrics
 - **Stack:** Next.js 14 App Router, TypeScript, Tailwind CSS, Supabase, Paystack, Resend, Fonnte, Cloudinary, PostHog, Upstash Redis
-- **DB:** Supabase — see migration at `supabase/migrations/20240221000000_initial_schema.sql`
-- **Components:** `src/components/` (Header, Footer)
-- **Customer pages:** `src/app/(site)/` — shop, collections, products/[slug], cart, checkout, track
-- **Admin pages:** `src/app/admin/` — DO NOT touch, built by Claude
-- **API routes:** `src/app/api/` — DO NOT touch, built by Gemini
-- **Lib:** `src/lib/` — supabase.ts, types.ts, cart-store.ts
-- **Order format:** `IBY-YYYYXXXX`
+- **Customer pages:** `src/app/(site)/` route group (NOT `src/app/` directly)
+- **Admin pages:** `src/app/admin/`
+- **Cart store:** `src/lib/cart-store.ts` — Zustand, persisted to localStorage
+- **Cart key:** `315fabrics-cart`
+- **CartItem type includes:** `unit_type: 'yard' | 'bundle'` and `minimum_quantity: number` (added in G2)
+- **Variants:** colorways only — `color` = colorway name, `size = null` always
+- **Yards logic:** `quantity` = yards ordered for yard-type products, or 1 for bundles. Line total = `unit_price × quantity`.
+- **Order format:** `315-YYYY-XXXXXX`
+- **WhatsApp:** `2349066609177`
 - **Full brief:** `CLAUDE.md`
 - **All tasks:** `task.md`
 
@@ -109,998 +52,464 @@ You are a **coding agent** for the iby_closet project. You implement assigned ta
 
 ## Coding Standards
 
-- TypeScript — no `any` types
+- TypeScript strict — no `any` types
 - Tailwind only for styling — no inline styles, no CSS modules
-- Server Components by default; `'use client'` only when needed (event handlers, hooks, browser APIs)
-- All Supabase queries go through `src/lib/supabase.ts`
-- Mobile-first — test layouts at 375px width first
+- Server Components by default; add `'use client'` only when needed (event handlers, hooks, browser APIs)
+- `'use client'` required for: Zustand cart reads, useState/useEffect, onClick handlers, PostHog events
+- Mobile-first — layouts at 375px width first
+- Use `<Image>` from `next/image` — never bare `<img>` tags
+- Use `<Link>` from `next/link` for internal navigation
+
+---
+
+## Architecture Notes
+
+- All customer-facing pages are in `src/app/(site)/` route group — this shares `(site)/layout.tsx` (Header + Footer + BackToTop + PostHog)
+- Admin panel is in `src/app/admin/` with separate `admin/layout.tsx`
+- ProductCard component: `src/components/ProductCard.tsx` — use for all product grids
+- Cart store: `src/lib/cart-store.ts` — import `useCartStore` hook
+- Supabase: import `supabaseServer` for server components/API routes, `supabaseBrowser` for client components
+- Delivery calculation: `POST /api/delivery/calculate` with `{ state, city, country }`
+- Order creation: `POST /api/orders` — handles both yard and bundle types
+
+---
+
+## ⚠ NEW TASKS — Batch 1 (2026-02-22)
+
+You have 3 new tasks: **C1, C2, C3**. Read `task.md` for full specs. Work order: **C1 → C2 → C3**.
+
+**Note on C1 dependency:** C1 reads `CartItem` from `src/lib/cart-store.ts` which is updated by Gemini in G2. G2 adds `unit_type` and `minimum_quantity` to CartItem. Work from the spec below — don't wait for G2 to complete, just add the same fields in your component.
+
+---
+
+### C1: ProductPurchasePanel full rewrite for fabric UX
+
+**File:** `src/app/(site)/products/[slug]/ProductPurchasePanel.tsx`
+
+Read the existing file first. This is a complete rewrite of the purchase panel for fabric-specific buying.
+
+**New props to add:**
+```typescript
+type ProductPurchasePanelProps = {
+  productId: string;
+  productName: string;
+  unitPrice: number;           // price per yard (yard-type) or bundle price (bundle-type)
+  productStatus: string;
+  primaryImageUrl: string | null;
+  variants: VariantOption[];   // colorways only — variant.color is the colorway name
+  unitType: 'yard' | 'bundle'; // NEW
+  minimumQuantity: number;     // NEW — min yards (yard-type) or total yards (bundle label)
+};
+```
+
+**Remove from VariantOption type:** `size` is no longer relevant but keep it in the type to avoid TS errors — just don't display it.
+
+**New UI behaviour:**
+
+**Colourway selector (replaces size selector):**
+- Label: "Colourway" (not "Size")
+- Show one button per variant, displaying `variant.color ?? 'Default'`
+- Selected: `border-black bg-black text-white`
+- Disabled (out of stock): `opacity-50 cursor-not-allowed`
+
+**Yard-type products (`unitType === 'yard'`):**
+- Show a numeric input below the colourway selector. Label: "Yards"
+- Input: `type="number"`, `min={minimumQuantity}`, `max={selectedVariant?.stock_quantity ?? minimumQuantity}`, `step={0.5}`, default value = `minimumQuantity`
+- Show line total below input: `"${yards} yards × ₦${unitPrice.toLocaleString('en-NG')} = ₦${(yards * unitPrice).toLocaleString('en-NG')}"`
+- Button: "Add to Cart"
+- Stock message: "X yards in stock" below the input
+
+**Bundle-type products (`unitType === 'bundle'`):**
+- No yard quantity input — quantity is locked at 1
+- Show text below colourway: `"Complete set — ${minimumQuantity} yards"` (e.g. "Complete set — 5 yards")
+- Button: "Order This Bundle"
+
+**WhatsApp fallback (if no variants at all):**
+- Keep existing WhatsApp CTA: "Enquire on WhatsApp"
+
+**addItem call — use `quantity` to mean yards:**
+```typescript
+addItem({
+  product_id: productId,
+  slug: productSlug,
+  variant_id: selectedVariant.id,
+  product_name: productName,
+  size: '',          // always empty for fabrics
+  color: selectedVariant.color ?? 'Default',
+  unit_price: unitPrice,
+  quantity: yards,   // yards entered for yard-type, or 1 for bundle-type
+  image_url: primaryImageUrl ?? '',
+  unit_type: unitType,
+  minimum_quantity: minimumQuantity,
+});
+```
+
+**Also update `src/app/(site)/products/[slug]/page.tsx`:**
+- Add `unitType={productData.unit_type as 'yard' | 'bundle'}` and `minimumQuantity={productData.minimum_quantity}` props when rendering `<ProductPurchasePanel>`.
+- `productData.unit_type` might be `null` for legacy products — fall back to `'yard'` if null: `unitType={(productData.unit_type ?? 'yard') as 'yard' | 'bundle'}`.
+- `productData.minimum_quantity` might be `null` — fall back to `1`: `minimumQuantity={productData.minimum_quantity ?? 1}`.
+
+---
+
+### C2: Global branding + copy updates
+
+Update all visible text from iby_closet → 315 Fabrics branding. Read each file before editing.
+
+**`src/components/Header.tsx`:**
+- Brand name text → "315 Fabrics" (or use logo if one exists — check `public/` for 315fabrics logo files; if none exist, use text)
+- In both desktop nav and mobile menu links: change "Size Guide" to "Yardage Guide", change `href="/size-guide"` to `href="/yardage-guide"`
+- Update mobile menu Instagram/WhatsApp links to @3_15fabrics and `2349066609177` if hardcoded
+
+**`src/components/Footer.tsx`:**
+- Brand name → "315 Fabrics"
+- Tagline → "Premium fabrics, sourced from around the world. Based in Epe, Lagos."
+- Instagram href → `https://instagram.com/3_15fabrics`, display text "@3_15fabrics"
+- WhatsApp href → `https://wa.me/2349066609177`
+- Copyright → `© {new Date().getFullYear()} 315 Fabrics. All rights reserved.`
+- Explore links: keep Shop, Collections — change "Size Guide" to "Yardage Guide" (href `/yardage-guide`), keep FAQ, Contact
+- Change "Brand" link label to "About Us" if present (href stays `/brand`)
+
+**`src/app/layout.tsx`:**
+- `metadata.title` default → "315 Fabrics"
+- `metadata.description` → "Premium asoebi fabrics — Ankara, French Lace, Swiss Voile, Aso-Oke, Senator and more. Based in Epe, Lagos. Shop online."
+
+**`src/app/(site)/layout.tsx`:**
+- Update OpenGraph `siteName` → "315 Fabrics"
+- Update metadata template → `'%s — 315 Fabrics'`
+- Update description if hardcoded
+
+**`src/app/(site)/loading.tsx`:**
+- Change the pulsing brand text from "iby_closet" (or whatever it currently says) to "315 FABRICS"
+
+**Create `src/app/(site)/yardage-guide/page.tsx`** (new file — server component, no data fetching):
+```
+export const metadata = { title: 'Yardage Guide' };
+export default function YardageGuidePage() { ... }
+```
+Page content:
+- h1: "Yardage Guide"
+- Intro: "Not sure how many yards you need? Here's a quick guide for common Nigerian styles."
+- Table with columns: "Style", "Yards Needed":
+  | Style | Yards Needed |
+  | Buba + Iro (traditional) | 6–8 yards |
+  | Gown (fitted/midi) | 4–5 yards |
+  | Gown (maxi/flared) | 5–7 yards |
+  | Agbada (3-piece set) | 12–15 yards |
+  | Kaftan (men's) | 4–5 yards |
+  | Men's shirt | 2.5–3 yards |
+  | Trousers | 2–2.5 yards |
+  | Aso-Oke wrapper (per piece) | 2 yards |
+  | Asoebi group order | Contact us for bulk pricing |
+- Tips section: "Tips for Ordering" with 3 bullet points: "When in doubt, buy an extra half yard — it's better to have extra than to run short.", "For group asoebi orders, measure per outfit style and multiply by number of guests.", "Not sure? WhatsApp us at +234 906 660 9177 and we'll help you work it out."
+- Keep the same page style (server component, same visual pattern as existing size-guide/faq pages — white background, editorial text, consistent padding)
+
+**`src/app/(site)/brand/page.tsx`:**
+- Read the file first
+- Replace "Ibrahim Hamed" → "Our Founder" (placeholder until name confirmed)
+- Replace all "iby_closet" → "315 Fabrics"
+- Instagram link → `https://instagram.com/3_15fabrics`
+- WhatsApp → `https://wa.me/2349066609177`
+- Update brand story text to fabric-focused: "Every great outfit starts with great fabric. At 315 Fabrics, we source the finest Ankara, French Lace, Swiss Voile, Aso-Oke, and more — so you can create looks that tell your story. Based in Epe, Lagos, we serve customers across Nigeria and beyond."
+- Keep existing page layout/structure — only change text content and links
+
+**`src/app/(site)/page.tsx`:**
+- Find the brand pillar/marquee strip text and replace: "Designed in Lagos · Founder-Led · Themed Collections" → "Sourced Globally · Sold in Epe, Lagos · Premium Fabrics"
+- Update Instagram CTA link: @iby_closet → @3_15fabrics, href → `https://instagram.com/3_15fabrics`
+- If there's a founder quote section referencing Ibrahim, update it to: "The right fabric makes the outfit. We make sure you always find yours." (remove any attribution to "Ibrahim Hamed")
+
+**`src/app/(site)/lookbook/page.tsx`:**
+- Read the file first
+- Replace the entire page content with a "Coming Soon" state:
+  - Full-screen black background (`min-h-screen bg-black text-white flex items-center justify-center`)
+  - Centred text block: h1 "The Lookbook" (text-4xl font-light uppercase tracking-[0.3em]), subtitle "Campaign photos and editorial content are coming soon." (text-sm text-neutral-400 tracking-widest mt-4), then an Instagram link "@3_15fabrics" → `https://instagram.com/3_15fabrics` styled as a border button (border border-white px-8 py-3 text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-colors mt-8 inline-block)
+- Keep the `metadata` export if it exists, just update the title
+- This can be a server component (no client state needed)
+
+---
+
+### C3: Admin ProductForm — add fabric-specific fields
+
+**File:** `src/app/admin/_components/ProductForm.tsx`
+
+Read the entire file first to understand its structure. Then add 3 new fields, keeping all existing logic unchanged.
+
+**State additions** (in the component's useState section):
+```typescript
+const [unitType, setUnitType] = useState<'yard' | 'bundle'>(product?.unit_type as 'yard' | 'bundle' ?? 'yard');
+const [minimumQuantity, setMinimumQuantity] = useState<number>(product?.minimum_quantity ?? 1);
+const [fabricType, setFabricType] = useState<string>(product?.fabric_type ?? '');
+```
+
+**Form field 1 — Fabric Type dropdown** (add after the Status field):
+```tsx
+<div>
+  <label className="mb-1 block text-xs uppercase tracking-widest">Fabric Type</label>
+  <select
+    value={fabricType}
+    onChange={(e) => setFabricType(e.target.value)}
+    className="w-full border border-neutral-200 bg-white px-3 py-2 text-sm"
+  >
+    <option value="">— Select Fabric Type —</option>
+    <option value="Ankara">Ankara</option>
+    <option value="French Lace">French Lace</option>
+    <option value="Swiss Voile">Swiss Voile</option>
+    <option value="Senator">Senator</option>
+    <option value="Aso-Oke">Aso-Oke</option>
+    <option value="Cotton">Cotton</option>
+    <option value="Other">Other</option>
+  </select>
+</div>
+```
+
+**Form field 2 — Unit Type toggle** (add after Fabric Type):
+```tsx
+<div>
+  <label className="mb-1 block text-xs uppercase tracking-widest">Sold By</label>
+  <div className="flex gap-4">
+    <label className="flex items-center gap-2 text-sm">
+      <input type="radio" value="yard" checked={unitType === 'yard'} onChange={() => setUnitType('yard')} />
+      Per Yard
+    </label>
+    <label className="flex items-center gap-2 text-sm">
+      <input type="radio" value="bundle" checked={unitType === 'bundle'} onChange={() => setUnitType('bundle')} />
+      Bundle Only (fixed set)
+    </label>
+  </div>
+</div>
+```
+
+**Form field 3 — Minimum Quantity** (add after Unit Type):
+```tsx
+<div>
+  <label className="mb-1 block text-xs uppercase tracking-widest">
+    {unitType === 'yard' ? 'Minimum Yards to Order' : 'Bundle Size (total yards in set)'}
+  </label>
+  <input
+    type="number"
+    min={0.5}
+    step={0.5}
+    value={minimumQuantity}
+    onChange={(e) => setMinimumQuantity(parseFloat(e.target.value) || 1)}
+    className="w-full border border-neutral-200 px-3 py-2 text-sm"
+    placeholder={unitType === 'yard' ? 'e.g. 5' : 'e.g. 6'}
+  />
+  <p className="mt-1 text-xs text-neutral-500">
+    {unitType === 'yard'
+      ? 'Customers cannot order fewer yards than this.'
+      : 'The number of yards included in this bundle set.'}
+  </p>
+</div>
+```
+
+**Variants section update:**
+- Find the "Size" column header in the variants table/grid and change it to "Colorway / Pattern"
+- Find the size input field in each variant row — keep it in the DOM but add `placeholder="(not used for fabrics)"` and `className="... opacity-50"` to visually de-emphasize it
+- The `color` input stays the primary field for colorway names
+
+**Form submission update:**
+- In the create/update product call, include `unit_type: unitType`, `minimum_quantity: minimumQuantity`, `fabric_type: fabricType || null` in the product data object passed to Supabase.
+
+---
+
+## ⚠ NEW TASKS — Batch 2 (2026-02-22)
+
+You have 2 new tasks: **C4 and C5**. Work order: C1 → C3 → C4 → C5. (C2 is marked done — Claude handled most of it.)
+
+**Status update on C2:** Claude already did items 1–5 and 7–9 of C2 (Header, Footer, layout.tsx files, loading.tsx, brand/page.tsx, lookbook/page.tsx, page.tsx). The only remaining C2 item is the yardage guide page — that is now **C5**.
+
+---
+
+### C4: Gender Filter on Shop Page + Admin Gender Dropdown
+
+**File 1: `src/app/(site)/shop/page.tsx`**
+Read the file first. It is a server component. Add a `gender` search param:
+- Destructure: `const { category, search, gender } = searchParams` (or however searchParams is currently destructured)
+- Add to Supabase products query: if `gender && ['men','women','unisex'].includes(gender)`, add `.eq('gender', gender)` to the query chain
+- Add gender filter pills above the product grid (before or after any existing category filter):
+```tsx
+<div className="flex gap-2 mb-8 flex-wrap">
+  {(['all', 'men', 'women', 'unisex'] as const).map((g) => {
+    const href = g === 'all' ? '/shop' : `/shop?gender=${g}`;
+    const active = (gender ?? 'all') === g;
+    return (
+      <Link key={g} href={href}
+        className={`px-4 py-1.5 text-xs uppercase tracking-widest border transition-colors ${
+          active ? 'bg-black text-white border-black' : 'border-neutral-300 text-neutral-600 hover:border-black hover:text-black'
+        }`}>
+        {g === 'all' ? 'All' : g.charAt(0).toUpperCase() + g.slice(1)}
+      </Link>
+    );
+  })}
+</div>
+```
+
+**File 2: `src/app/admin/_components/ProductForm.tsx`**
+Add after the Fabric Type `<select>` (from C3):
+- State: `const [gender, setGender] = useState<string>(product?.gender ?? 'unisex');`
+- Field:
+```tsx
+<div>
+  <label className="mb-1 block text-xs uppercase tracking-widest">Gender</label>
+  <select
+    value={gender}
+    onChange={(e) => setGender(e.target.value)}
+    className="w-full border border-neutral-200 bg-white px-3 py-2 text-sm"
+  >
+    <option value="unisex">Unisex</option>
+    <option value="women">Women</option>
+    <option value="men">Men</option>
+  </select>
+</div>
+```
+- Include `gender` in the product upsert/insert payload.
+
+---
+
+### C5: Yardage Guide Page (remaining from C2)
+
+**Create `src/app/(site)/yardage-guide/page.tsx`** — server component, no data fetching. Read `src/app/(site)/faq/page.tsx` first to match the visual style (white bg, max-w-3xl, editorial padding, section spacing).
+
+```tsx
+import type { Metadata } from 'next';
+import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Yardage Guide',
+  description: 'Not sure how many yards you need? Use this guide for common Nigerian outfit styles.',
+};
+
+export default function YardageGuidePage() { ... }
+```
+
+**Page content:**
+- Hero section (black bg, white text, same as brand/faq pages): h1 "Yardage Guide", subtitle "How many yards do you need?"
+- Main content section (white bg, max-w-3xl, centered, py-20 px-6):
+  - Intro: "Not sure how many yards you need? Here's a quick guide for common Nigerian styles."
+  - Table (use `<table>` with border-collapse, clean styling — thead with "Style" and "Yards Needed" headers, tbody rows alternating subtle bg):
+    | Style | Yards Needed |
+    |---|---|
+    | Buba + Iro (traditional) | 6–8 yards |
+    | Gown (fitted/midi) | 4–5 yards |
+    | Gown (maxi/flared) | 5–7 yards |
+    | Agbada (3-piece set) | 12–15 yards |
+    | Kaftan (men's) | 4–5 yards |
+    | Men's shirt | 2.5–3 yards |
+    | Trousers | 2–2.5 yards |
+    | Aso-Oke wrapper (per piece) | 2 yards |
+    | Asoebi group order | Contact us for bulk pricing |
+  - h2: "Tips for Ordering" (uppercase tracking-widest)
+  - ul with 3 items:
+    - "When in doubt, buy an extra half yard — it's better to have extra than to run short."
+    - "For group asoebi orders, measure per outfit style and multiply by number of guests."
+    - "Not sure? WhatsApp us at +234 906 660 9177 and we'll help you work it out."
+- CTA at bottom: `<Link href="/shop">← Back to Shop</Link>`
 
 ---
 
 ## Progress Log
 
-- 2026-02-21 05:43 | TASK C1 complete
-  - Installed `zustand` dependency.
-  - Created `src/lib/cart-store.ts` with persisted Zustand cart store (`items`, `addItem`, `removeItem`, `updateQuantity`, `clearCart`, `totalItems`, `subtotal`).
-- 2026-02-21 05:48 | TASK C2 complete
-  - Updated `src/components/Header.tsx` to a client component.
-  - Wired live cart count using Zustand (`Cart ({totalItems})`) with existing styles preserved.
-- 2026-02-21 05:50 | TASK C3 complete
-  - Replaced shop placeholder with server-side Supabase fetch for active products.
-  - Added primary image lookup from `product_images`, 2-col mobile / 4-col desktop product grid, and price formatting (`₦XX,XXX`) with links to product detail pages.
-- 2026-02-21 05:56 | TASK C4 complete
-  - Replaced collections placeholder with server-side Supabase fetch for `active` and `upcoming` collections.
-  - Implemented editorial collection cards with cover image, 2-line description clamp, upcoming amber badge, and conditional CTA text (`Notify Me` / `Explore`).
-- 2026-02-21 05:59 | TASK C5 complete
-  - Rebuilt product detail page with server-side fetch for product, variants, images, and collection name.
-  - Added client purchase panel (`src/app/(site)/products/[slug]/ProductPurchasePanel.tsx`) for size selection + cart integration and sold-out button disabling.
-  - Added fabric details and care instructions accordions with required product layout and gallery structure.
-- 2026-02-21 06:04 | TASK C6 complete
-  - Replaced the cart placeholder with a client-side Zustand cart page (`src/app/(site)/cart/page.tsx`).
-  - Added item rendering, quantity +/- controls, remove action, order summary sidebar, checkout CTA, and empty-cart state linking to `/shop`.
-- 2026-02-21 06:09 | TASK C7 complete
-  - Rebuilt checkout as a client flow with form validation, Nigerian state dropdown, and dynamic delivery option fetch via `POST /api/delivery/calculate`.
-  - Integrated Paystack inline payments using `react-paystack` and wired success callback to `POST /api/orders` with `payment_reference`, then redirect to `/checkout/success?order=...`.
-  - Connected sidebar summary to Zustand cart state and added loading/error feedback handling.
-- 2026-02-21 06:20 | TASK C8 complete
-  - Built `src/app/(site)/checkout/success/page.tsx` as a client page.
-  - Reads `?order=` query param, shows large order number, links to `/track?order=...` and `/shop`, and clears cart on mount.
-- 2026-02-21 06:20 | TASK C9 complete
-  - Built `src/app/(site)/track/page.tsx` with order lookup form calling `GET /api/orders/[orderNumber]`.
-  - Added state badge, items list, delivery address display, vertical tracking timeline, and 404 "Order not found" handling.
-- 2026-02-21 06:20 | TASK C10 complete
-  - Updated `src/components/Footer.tsx` to a client component and wired newsletter form to `POST /api/contacts` with `{ email, source: 'footer' }`.
-  - Added inline success/error feedback and loading state while preserving existing footer styling.
-- 2026-02-21 07:37 | TASK C11 complete
-  - Rebuilt `src/app/(site)/page.tsx` as a server component connected to Supabase featured products and collections.
-  - Replaced placeholder sections with real product cards (with primary images) and a new featured collections section while preserving the existing hero.
-- 2026-02-21 07:37 | TASK C12 complete
-  - Built `src/app/(site)/collections/[slug]/page.tsx` as a server-rendered collection detail page with `notFound()` handling.
-  - Added hero rendering (cover image or fallback black hero), release date label, and active product grid with primary images and empty-state message.
-- 2026-02-21 07:37 | TASK C13 complete
-  - Replaced bare `<img>` tags with Next.js `<Image />` in the required files:
-    `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`.
-  - Added responsive `sizes` and `fill` usage where needed, and configured remote image domains in `next.config.mjs`.
-- 2026-02-21 07:37 | TASK C14 complete
-  - Added `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component) with expandable email/WhatsApp waitlist form.
-  - Integrated notify form into upcoming collection cards in `src/app/(site)/collections/page.tsx` and wired POST to `/api/waitlist`.
-- 2026-02-21 08:02 | TASK C15 complete
-  - Extended `src/app/(site)/products/[slug]/ProductPurchasePanel.tsx` for two new states:
-    no variants => "Enquire on WhatsApp" CTA using `NEXT_PUBLIC_WHATSAPP_NUMBER`; variants with zero stock => out-of-stock messaging.
-  - Updated `src/app/(site)/products/[slug]/page.tsx` to pass all variants (not only in-stock), so stock-state UI can render correctly.
-  - Added `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`.
-- 2026-02-21 08:23 | TASK C16 complete
-  - Built `src/app/(site)/shop/[category-slug]/page.tsx` as a server category filter page with slug lookup, `notFound()` guard, active-product fetch, primary image mapping, and "Back to Shop" navigation.
-  - Rendered products using the same responsive card grid style as the main shop page.
-- 2026-02-21 08:23 | TASK C17 complete
-  - Added `src/components/PostHogProvider.tsx` and `src/components/PostHogPageView.tsx` for PostHog initialization and route-based `$pageview` capture.
-  - Wired PostHog provider + pageview component into `src/app/(site)/layout.tsx`.
-  - Added `add_to_cart` event capture in `src/lib/cart-store.ts` via dynamic import of `posthog-js` inside `addItem`.
-- 2026-02-21 08:51 | TASK C18 complete
-  - Updated `src/app/(site)/checkout/page.tsx` to support international orders with country selection (Nigeria default + custom "Other"), conditional state/province input, and country-aware delivery option requests.
-  - Included `country` in the checkout order payload `delivery_address` JSON object.
-- 2026-02-21 08:51 | TASK C19 complete
-  - Added component test stack dependencies (`@testing-library/react`, `@testing-library/jest-dom`, `jsdom`, and ensured `vitest`/`@vitejs/plugin-react` availability).
-  - Created `__tests__/components/cart-store.test.ts` and `__tests__/components/PaystackButton.test.tsx`.
-  - Updated `vitest.config.ts` for component-test jsdom matching and kept shared setup in `__tests__/setup.ts`.
-  - Ran full test suite successfully (`15 passed`).
-- 2026-02-21 09:26 | TASK C20 complete
-  - Refined `src/app/(site)/cart/page.tsx` item rows with 40x50 rounded thumbnails, clearer size/color/unit metadata, quantity controls, line totals, and remove action.
-  - Added a `Continue Shopping` link below cart items and kept the existing empty-cart state unchanged.
-  - Updated order summary copy to show `Delivery calculated at checkout` as the delivery note.
-- 2026-02-21 09:26 | TASK C21 complete
-  - Added `src/components/PageTransition.tsx` with a 300ms fade-in animation and route-aware remount via `usePathname`.
-  - Wrapped site layout children in `PageTransition` at `src/app/(site)/layout.tsx` while preserving the existing PostHog Suspense boundary.
-  - Added branded loading UIs at `src/app/(site)/loading.tsx` and `src/app/admin/loading.tsx`.
-- 2026-02-21 10:13 | TASK C22 complete
-  - Extended `src/app/admin/products/page.tsx` with CSV bulk-upload flow: file selection, parser, preview table, row validation, and confirmation action.
-  - Added product/variant/image insertion logic with per-row error reporting and rollback on partial insert failures.
-  - Added guidance for CSV headers and supported `variants`/`image_urls` formats directly in the admin UI.
-- 2026-02-21 10:13 | TASK C23 complete
-  - Updated `src/app/(site)/cart/page.tsx` with abandoned-cart detection using a 30-minute localStorage activity window.
-  - Added recovery modal with email/WhatsApp inputs that calls `POST /api/abandoned-cart/recover` and sends cart data payload.
-  - Added inline recovery success/error feedback and localStorage cooldown flag to prevent repeated prompt spam.
-- 2026-02-21 10:52 | TASK C24 complete
-  - Added `slug: string` to the `CartItem` shape in `src/lib/cart-store.ts`.
-  - Updated `src/app/(site)/products/[slug]/ProductPurchasePanel.tsx` add-to-cart payload to include `slug` from the route params.
-  - Updated `src/app/(site)/cart/page.tsx` product title to render `item.slug ? <Link ...> : <span>` for backward compatibility with older persisted cart items.
-- 2026-02-21 10:52 | TASK C25 complete
-  - Replaced the redirect in `src/app/admin/page.tsx` with a client dashboard page.
-  - Added 4 stat cards with zero-safe fallback when `GET /api/admin/stats` is unavailable.
-  - Added recent orders panel (latest 5 via `supabaseBrowser`) with status badges, amount, and `DD MMM HH:mm` timestamp display plus quick actions.
-- 2026-02-21 10:52 | TASK C26 complete
-  - Created `src/app/sitemap.ts` returning `MetadataRoute.Sitemap` for static routes and dynamic product/collection URLs.
-  - Added Supabase queries for active products and active/upcoming collections using `supabaseServer`.
-  - Applied per-route priorities/frequencies and hardcoded base URL `https://iby-closet.com`.
-- 2026-02-21 11:28 | TASK C27 complete
-  - Added reusable `src/components/ImageUploader.tsx` with dashed drop-zone label, local preview (`URL.createObjectURL`), upload state, and inline error handling.
-  - Refactored `src/app/admin/products/_components/ProductForm.tsx` image section to use uploader-driven image slots (`onUpload` updates image URL state).
-  - Applied the same uploader-based flow to both create/edit product forms via shared `ProductForm` and kept admin products CSV functionality unchanged.
-- 2026-02-21 11:28 | TASK C28 complete
-  - Added `src/app/(site)/shop/_components/ShopFilter.tsx` client component with search + category pills and filtered product grid rendering.
-  - Updated `src/app/(site)/shop/page.tsx` to fetch categories server-side and pass `products` + `categories` to `ShopFilter`.
-  - Preserved the existing `cachedFetch('shop:products', ...)` wrapping for product data.
-- 2026-02-22 04:10 | TASK C31 complete
-  - Fully rewrote `src/app/(site)/lookbook/page.tsx` to remove Supabase-powered image fetching and use static local image arrays (`EDITORIAL`, `PRODUCTS`) as specified.
-  - Implemented the requested black hero, section labels, editorial masonry, product masonry, and Instagram CTA structure using Next.js `Image` with fixed width/height in masonry blocks.
-  - Kept the page as a server component and preserved the existing `metadata` export.
-- 2026-02-22 04:10 | TASK C32 complete
-  - Updated `src/app/(site)/brand/page.tsx` to import `Image` from `next/image`.
-  - Replaced the founder placeholder gradient block with the real founder photo block using `/images/instagram/product_100.jpg` and `fill` sizing.
-  - Kept all surrounding brand-page layout and copy unchanged.
+- **[2026-02-22 09:46]** Completed C1, C3, C4, and C5. Rewrote `src/app/(site)/products/[slug]/ProductPurchasePanel.tsx` for colourway + yard/bundle UX and updated `src/app/(site)/products/[slug]/page.tsx` to pass `unitType`/`minimumQuantity`. Added fabric fields (`fabric_type`, `unit_type`, `minimum_quantity`) and `gender` support to `src/app/admin/products/_components/ProductForm.tsx`, including payload updates and variant UI adjustments. Added server-side gender filtering + pills in `src/app/(site)/shop/page.tsx`. Created `src/app/(site)/yardage-guide/page.tsx` with hero, yardage table, ordering tips, and back-to-shop CTA. Ran ESLint on all touched files with no errors.
+
+### [C6] - Cart yards display | Done: 2026-02-22 10:06
+- **What I did:** Updated `src/app/(site)/cart/page.tsx` item rendering to derive `itemUnitType` with a legacy fallback (`item.unit_type ?? 'yard'`), display quantity labels as `"{quantity} yards"` for yard items and `"Bundle (1 set)"` for bundle items, and render the requested line-total label format (`yds x unit = total`) in the existing total text area.
+- **Why I approached it this way:** I kept the existing cart row structure and quantity-control placement intact to satisfy the "no layout change" constraint, limiting edits to the text content and label composition logic.
+- **Tricky parts:** Persisted legacy cart entries may not include `unit_type`; handling that runtime case safely without changing cart store typings required a local fallback in the render path.
+- **What Claude should verify:** Check mobile width behavior for long quantity labels inside the quantity control, and confirm expected copy for both `yard` and `bundle` items in cart rows.
+
+### [C7] - Remove size guide and update track example | Done: 2026-02-22 10:06
+- **What I did:** Deleted `src/app/(site)/size-guide/page.tsx`, removed the empty `src/app/(site)/size-guide/` directory, and updated the order-format helper text in `src/app/(site)/track/page.tsx` to `315-2026-XXXXXX`.
+- **Why I approached it this way:** The task explicitly requested route removal (accepting 404 behavior) and a copy-only update on track page, so I avoided any redirect or logic changes.
+- **Tricky parts:** None functionally; the key risk was accidental edits to tracking logic, which I avoided by changing only the display line.
+- **What Claude should verify:** Confirm `/size-guide` returns 404 and `/track` now shows the `315-` format example while API behavior remains unchanged.
 
 ---
 
-## ⚠ NEW TASKS ASSIGNED — Batch 7 (2026-02-21)
+## ⚠ NEW TASKS — Batch 3 (2026-02-22)
 
-You have 3 new tasks: **C24, C25, C26**. Read `task.md` for full specs. Work order: **C24 → C25 → C26**.
-
-**Summary:**
-- **C24** — Add `slug: string` to the `CartItem` type in `cart-store.ts`. Pass `product.slug` when calling `addItem` in `ProductPurchasePanel.tsx`. In the cart page, wrap product names in `<Link href={/products/${item.slug}}>` (with a guard for old items without slug).
-- **C25** — Build Admin Dashboard at `src/app/admin/page.tsx`. Fetch `GET /api/admin/stats` (Gemini builds G26) for stat cards: Revenue, Orders, Products, New Today. Show last 5 recent orders from Supabase. Quick action buttons: New Manual Order, Quick Sale.
-- **C26** — Create `src/app/sitemap.ts`. Export async sitemap function returning static routes + all active product `/products/[slug]` routes + all active/upcoming collection `/collections/[slug]` routes. Base URL: `https://iby-closet.com`.
-
-**⚠ Claude audit notes from Batch 6 (C22-C23):**
-- C22 (CSV upload) and C23 (abandoned cart modal) were correctly implemented.
-- Claude fixed 3 build errors from prior batches: unused `Image` import in `shop/[category-slug]/page.tsx`, `cartData?: any` param in `email.ts`, wrong arg count in `abandoned-cart/recover/route.ts`.
-- `export const dynamic = 'force-dynamic'` must be placed AFTER all imports, not between them — Claude fixed this in `page.tsx` and `shop/page.tsx`.
-- **C25 depends on G26** — if stats API isn't ready, show 0 placeholders. Don't block.
-- **CartItem slug guard** (C24): use `item.slug ? <Link href=...> : <span>` for backwards compatibility with old localStorage cart items.
+You have 2 new tasks: **C6, C7**. Work order: C6 → C7.
 
 ---
 
-## ⚠ NEW TASKS ASSIGNED — Batch 5 (2026-02-21)
+### C6: Cart page — yards display
 
-You have 2 new tasks: **C20, C21**. Read `task.md` for full specs. Work order: **C20 → C21**.
+**File:** `src/app/(site)/cart/page.tsx` — read the entire file first.
 
-**Summary:**
-- **C20** — Improve the Cart page UX. Add product image thumbnails for each item, improve layout with better spacing, add "Continue Shopping" link, and delivery note in the order summary. Clean up the responsive layout.
-- **C21** — Add smooth page transitions and loading states. Create a `PageTransition` component with fade-in effect, wrap site content in it. Create `loading.tsx` files for both `(site)` and `admin` route groups with minimal branded loading UI.
+The cart items already have `unit_type` and `quantity` (where quantity = yards for yard-type products). Update the cart item display so the units are clearly labeled:
 
-**⚠ Claude notes from Batch 4 + current session:**
-- Claude fixed ProductPurchasePanel: added quantity selector with +/- buttons, "Added ✓" feedback for 2.5s after adding to cart, and "In Cart (qty) — Add More" button text when variant is already in cart. Do NOT revert these changes.
-- Claude built 5 new pages: `/brand`, `/lookbook`, `/size-guide`, `/faq`, `/contact`. These are in `src/app/(site)/brand/`, `lookbook/`, `size-guide/`, `faq/`, `contact/`. Do NOT edit these.
-- `vitest.config.ts` is now excluded from `tsconfig.json` to fix a build error. Do NOT add it back.
-- Cart items have these fields: `product_id`, `variant_id`, `product_name`, `size`, `color`, `unit_price`, `quantity`, `image_url`. Note: there is no `slug` field — use product name without links if needed.
-- All previous batch audit notes still apply.
+- For items where `item.unit_type === 'yard'`:
+  - Show `"{item.quantity} yards"` instead of a plain number for the quantity column
+  - Line total label should read: `{item.quantity} yds × ₦{price.toLocaleString('en-NG')} = ₦{total.toLocaleString('en-NG')}`
+- For items where `item.unit_type === 'bundle'` (or undefined):
+  - Show `"Bundle (1 set)"` instead of a plain `1`
+- The subtotal calculation (`item.unit_price × item.quantity`) does NOT change — only the display labels
+- Match existing cart item styling — don't change the layout, only update text for quantity and unit labels
 
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
-
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
+**Note:** If `unit_type` is not set on a cart item (legacy items), treat it as `'yard'` for display purposes.
 
 ---
 
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
+### C7: Delete size-guide + fix track page format
 
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
+**(1) Delete `src/app/(site)/size-guide/page.tsx`** — this page is superseded by `/yardage-guide`. Simply delete the file (the URL will 404, which is acceptable — no redirect needed). Check if there is a `src/app/(site)/size-guide/` directory; if so, delete the whole folder.
 
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
+**(2) Fix `src/app/(site)/track/page.tsx`** — read the file first. Find the order number format example text (something like "e.g. IBY-2026-XXXXXX" or "Format: IBY-..." in a placeholder or help text). Change it to show `315-2026-XXXXXX` format. Only change the example/display text — do NOT touch form logic, API calls, state, or any functional code.
 
 ---
 
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
+## ⚠ NEW TASKS — Batch 4 (2026-02-22)
 
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
+You have 2 new tasks: **C8, C9**. Work order: C8 → C9. Note: C9 depends on G11 (Gemini adds the sort param to the server component first).
 
 ---
 
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
+### C8: Checkout success page — fabric copy
 
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
+**File:** `src/app/(site)/checkout/success/page.tsx` — read the entire file first.
 
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
+Update copy to be fabric-focused (not fashion/clothing):
+- If heading says something like "Order Confirmed ✓" — keep but remove any emojis
+- Find the sub-message about what happens next. Change to: `"Your fabric order has been confirmed. We'll send you a WhatsApp message to confirm delivery timing and track your package."`
+- If there's a line about "Your style is on its way" or similar fashion copy — change to: `"Your fabric is on its way."`
+- If the page has a "Continue Shopping" or similar CTA — update label to `"Back to Shop"` pointing to `/shop`
+- If there's any `IBY-` in display text (not the actual order number from DB) — fix to `315-`
+- Do NOT change the order number display logic, the Paystack reference lookup, or any API calls
 
 ---
 
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
+### C9: Sort UI on shop page
 
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
+**File:** `src/app/(site)/shop/page.tsx` — read first. **Requires G11 to be done** (Gemini adds `sort` prop to ShopFilter and the server-side sort param).
 
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
+After G11 is complete, add sort pills to the shop page **below** the gender pills. The `sort` value comes from `searchParams.sort` (already extracted server-side by G11 — reuse the same logic).
 
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
+Sort options:
+```tsx
+const sortOptions = [
+  { value: 'newest', label: 'Newest' },
+  { value: 'price-asc', label: 'Price ↑' },
+  { value: 'price-desc', label: 'Price ↓' },
+] as const;
+```
 
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
+Render sort pills with the same styling as the gender pills (border, uppercase, tracking-widest, black active state). Pill links must preserve the existing `gender` param:
+```tsx
+// build the href preserving gender
+const sortHref = (sortValue: string) => {
+  const params = new URLSearchParams();
+  if (gender) params.set('gender', gender);
+  if (sortValue !== 'newest') params.set('sort', sortValue);
+  const qs = params.toString();
+  return `/shop${qs ? '?' + qs : ''}`;
+};
+```
 
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
-
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
+Add a "Sort by:" label before the pills: `<span className="text-xs uppercase tracking-widest text-neutral-500 mr-2">Sort by:</span>`
 
 ---
 
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
-
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
-
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
-
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
-
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
-
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
-
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
-
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
-
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
-
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
-
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
-
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
-
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
-
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
-
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
-
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
-
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
-
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
-
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
-
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
-
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
-
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
-
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
-
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
-
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
-
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
-
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
-
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
-
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` and write component/store tests. If vitest isn't installed yet, install it yourself.
-- **Checkout page** was rebuilt by Claude with full Paystack integration. Read `src/app/(site)/checkout/page.tsx` carefully before editing — it has: PaystackButton dynamic import, Nigerian states dropdown, delivery option fetch, form validation, and order creation flow.
-- **PaystackButton** is at `src/app/(site)/checkout/PaystackButton.tsx` — a client component using `react-paystack`.
-- The delivery API now accepts an optional `country` field (G18 adds this). Default to `'Nigeria'` if G18 isn't done yet.
-
-**⚠ Claude audit notes from Batch 3:**
-- PostHogPageView needed a `<Suspense>` boundary because `useSearchParams()` triggers dynamic rendering. Claude wrapped it in `<Suspense fallback={null}>` in the site layout. Don't remove this.
-- All other C16-C17 work was clean.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C16, C17**. Read `task.md` for full specs. Work order: **C16 → C17**.
-
-**Summary:**
-- **C16** — Build Category filter page (`src/app/(site)/shop/[category-slug]/page.tsx`). Server component. Fetch category by slug, then fetch products in that category. Same grid layout as the shop page. Use `notFound()` if slug invalid. Use `supabaseServer`, `Image` from `next/image`.
-- **C17** — Set up PostHog analytics. Create `PostHogProvider.tsx` and `PostHogPageView.tsx` in `src/components/`. Add them to `src/app/(site)/layout.tsx`. Track page views + add-to-cart events. Use `posthog-js` (already installed).
-
-**⚠ Claude audit notes from previous batches:**
-- Checkout page (C7) was still a placeholder — Claude rebuilt it with full Paystack integration, delivery calculation, cart state, and form validation.
-- `collections/[slug]/page.tsx` (C12) had bare `<img>` tags that C13 missed — Claude fixed.
-- Several unused imports were cleaned up from admin files.
-- The waitlist API route had a `source` field that doesn't exist in the DB — Claude fixed.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 1 new task: **C15**. Read `task.md` for full spec. Summary:
-
-- **C15** — Improve the product detail page for the "no variants" case. In `ProductPurchasePanel.tsx`: if NO variants exist, show a WhatsApp enquiry button (`https://wa.me/${NEXT_PUBLIC_WHATSAPP_NUMBER}?text=...`) instead of the size selector. If variants exist but stock is 0, show an out-of-stock message. Add `NEXT_PUBLIC_WHATSAPP_NUMBER` to `.env.example`. Keep all other existing logic unchanged.
-
-**Work order: C15 only.**
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 4 new tasks: **C11, C12, C13, C14**. Read `task.md` for full specs. Summary:
-
-- **C11** — Wire Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Fetch is_featured products + collections. Server component. Use `supabaseServer` from `@/lib/supabase`.
-- **C12** — Build Collection detail page (`src/app/(site)/collections/[slug]/page.tsx`). Hero + products in that collection. Server component. Use `notFound()` if slug not found.
-- **C13** — Replace all `<img>` tags with Next.js `<Image />` across: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Also check `next.config.js` and add `images.remotePatterns` for any external image domains (Cloudinary, Instagram CDN, etc).
-- **C14** — Wire "Notify Me" CTA on collections page. Create `src/app/(site)/collections/_components/NotifyMeButton.tsx` (client component). POST to `/api/waitlist`. **Do C14 last** — it depends on Gemini finishing G13 first.
-
-**Work order: C11 → C12 → C13 → C14**
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **C22, C23**. Read `task.md` for full specs. Work order: **C22 → C23**.
-
-**Summary:**
-- **C22** — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products/variants/images, show preview, handle errors.
-- **C23** — On cart page, detect abandoned cart (>30min), show modal offering recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 4 (2026-02-21)
-
-You have 2 new tasks: **C18, C19**. Read `task.md` for full specs. Work order: **C18 → C19**.
-
-**Summary:**
-- **C18** — Add international order support to the checkout page. Add a country selector (Nigeria default, plus Ghana, Kenya, South Africa, UK, US, Canada, Other). When non-Nigeria, swap the state dropdown for a text input. Pass `country` to the delivery API and include it in the order's delivery_address JSONB.
-- **C19** — Write frontend tests using Vitest + React Testing Library. Test the Zustand cart store (add/remove/update/clear/computed values) and the PaystackButton component (render, disabled state, amount format). Vitest will already be installed by Gemini's G19 task.
-
-**⚠ Important notes:**
-- **C19 depends on G19** — Gemini installs vitest and creates the base config. You add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`
+## Notes for Future Batches
+
+- The visual aesthetic (warm earth tones, gold accents) is queued — do NOT change Tailwind colors until explicitly assigned.
+- The lookbook is set to "Coming Soon" for now — no gallery needed until the owner has campaign photos.
+- Admin session cookie is now `315fabrics_admin_session` (renamed by Gemini G5).
+- When products are seeded from Instagram, `product_variants.size` will be `null` for all rows — colorways only.

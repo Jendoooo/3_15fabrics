@@ -6,7 +6,7 @@ export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
-  const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '2349131410602').replace(/\D/g, '');
+  const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '2349066609177').replace(/\D/g, '');
   const whatsappHref = `https://wa.me/${whatsappNumber}`;
 
   const handleSubmit = async (e: FormEvent) => {
@@ -80,12 +80,12 @@ export default function ContactPage() {
                   Follow us for new drops, behind-the-scenes, and editorial content.
                 </p>
                 <a
-                  href="https://instagram.com/iby_closet"
+                  href="https://instagram.com/3_15fabrics"
                   target="_blank"
                   rel="noreferrer"
                   className="mt-2 inline-block text-sm font-medium underline transition-colors hover:text-neutral-500"
                 >
-                  @iby_closet
+                  @3_15fabrics
                 </a>
               </div>
 
@@ -97,28 +97,20 @@ export default function ContactPage() {
                   For partnerships, press enquiries, and wholesale.
                 </p>
                 <a
-                  href="mailto:Ibycloset11@gmail.com"
+                  href="mailto:hello@315fabrics.com"
                   className="mt-2 inline-block text-sm font-medium underline transition-colors hover:text-neutral-500"
                 >
-                  Ibycloset11@gmail.com
+                  hello@315fabrics.com
                 </a>
               </div>
 
               <div>
                 <h3 className="mb-2 text-sm font-semibold uppercase tracking-widest">
-                  TikTok
+                  Location
                 </h3>
                 <p className="text-sm text-neutral-600">
-                  Short-form content, fits, and style inspiration.
+                  Based in Epe, Lagos. We serve customers across Lagos and all over Nigeria.
                 </p>
-                <a
-                  href="https://tiktok.com/@iby_closet"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 inline-block text-sm font-medium underline transition-colors hover:text-neutral-500"
-                >
-                  @iby_closet
-                </a>
               </div>
 
               <div>
@@ -126,7 +118,7 @@ export default function ContactPage() {
                   Visit Us
                 </h3>
                 <p className="text-sm text-neutral-600">
-                  Our Lagos space is open for walk-ins. DM us on Instagram or WhatsApp for the address and available times.
+                  We&apos;re based in Epe, Lagos. WhatsApp us to arrange a viewing or pick-up.
                 </p>
               </div>
             </div>

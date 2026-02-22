@@ -7,8 +7,8 @@ import Link from 'next/link';
 import { useCartStore } from '@/lib/cart-store';
 
 const ABANDONED_CART_WINDOW_MS = 30 * 60 * 1000;
-const CART_LAST_ACTIVE_KEY = 'iby_closet_cart_last_active_at';
-const CART_RECOVERY_SENT_KEY = 'iby_closet_cart_recovery_sent_at';
+const CART_LAST_ACTIVE_KEY = '315fabrics_cart_last_active_at';
+const CART_RECOVERY_SENT_KEY = '315fabrics_cart_recovery_sent_at';
 
 const formatNaira = (value: number | string) => {
   const numStr = Number(value).toString();
@@ -154,81 +154,91 @@ export default function CartPage() {
 
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">
-            {items.map((item) => (
-              <article
-                key={item.variant_id}
-                className="flex flex-col gap-4 border-t border-neutral-200 py-6 sm:flex-row sm:items-start sm:gap-5"
-              >
-                <div className="relative h-[50px] w-10 shrink-0 overflow-hidden rounded-md bg-neutral-100">
-                  {item.image_url ? (
-                    <Image
-                      src={item.image_url}
-                      alt={item.product_name}
-                      fill
-                      sizes="40px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <span className="sr-only">No image available</span>
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col gap-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm uppercase tracking-widest">
-                        {item.slug ? (
-                          <Link
-                            href={`/products/${item.slug}`}
-                            className="transition-colors hover:text-neutral-600"
-                          >
-                            {item.product_name}
-                          </Link>
-                        ) : (
-                          <span>{item.product_name}</span>
-                        )}
-                      </h3>
-                      <div className="mt-1 space-y-1 text-xs uppercase tracking-widest text-neutral-500">
-                        <p>Size: {item.size}</p>
-                        {item.color && item.color !== 'Default' ? <p>Color: {item.color}</p> : null}
-                        <p>Unit: {formatNaira(item.unit_price)}</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeItem(item.variant_id)}
-                      className="text-xs uppercase tracking-widest text-neutral-500 transition-colors hover:text-black"
-                    >
-                      Remove
-                    </button>
-                  </div>
+            {items.map((item) => {
+              const itemUnitType = item.unit_type ?? 'yard';
+              const quantityLabel =
+                itemUnitType === 'yard' ? `${item.quantity} yards` : 'Bundle (1 set)';
+              const lineTotalLabel =
+                itemUnitType === 'yard'
+                  ? `${item.quantity} yds × ${formatNaira(item.unit_price)} = ${formatNaira(item.unit_price * item.quantity)}`
+                  : `${quantityLabel} × ${formatNaira(item.unit_price)} = ${formatNaira(item.unit_price * item.quantity)}`;
 
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center border border-neutral-300">
+              return (
+                <article
+                  key={item.variant_id}
+                  className="flex flex-col gap-4 border-t border-neutral-200 py-6 sm:flex-row sm:items-start sm:gap-5"
+                >
+                  <div className="relative h-[50px] w-10 shrink-0 overflow-hidden rounded-md bg-neutral-100">
+                    {item.image_url ? (
+                      <Image
+                        src={item.image_url}
+                        alt={item.product_name}
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="sr-only">No image available</span>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col gap-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm uppercase tracking-widest">
+                          {item.slug ? (
+                            <Link
+                              href={`/products/${item.slug}`}
+                              className="transition-colors hover:text-neutral-600"
+                            >
+                              {item.product_name}
+                            </Link>
+                          ) : (
+                            <span>{item.product_name}</span>
+                          )}
+                        </h3>
+                        <div className="mt-1 space-y-1 text-xs uppercase tracking-widest text-neutral-500">
+                          <p>Size: {item.size}</p>
+                          {item.color && item.color !== 'Default' ? <p>Color: {item.color}</p> : null}
+                          <p>Unit: {formatNaira(item.unit_price)}</p>
+                        </div>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => updateQuantity(item.variant_id, item.quantity - 1)}
-                        className="h-9 w-9 text-lg text-neutral-700 transition-colors hover:bg-neutral-100"
+                        onClick={() => removeItem(item.variant_id)}
+                        className="text-xs uppercase tracking-widest text-neutral-500 transition-colors hover:text-black"
                       >
-                        -
-                      </button>
-                      <span className="flex h-9 min-w-9 items-center justify-center border-x border-neutral-300 px-2 text-sm">
-                        {item.quantity}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(item.variant_id, item.quantity + 1)}
-                        className="h-9 w-9 text-lg text-neutral-700 transition-colors hover:bg-neutral-100"
-                      >
-                        +
+                        Remove
                       </button>
                     </div>
-                    <p className="text-sm uppercase tracking-wide text-black">
-                      {formatNaira(item.unit_price * item.quantity)}
-                    </p>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center border border-neutral-300">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.variant_id, item.quantity - 1)}
+                          className="h-9 w-9 text-lg text-neutral-700 transition-colors hover:bg-neutral-100"
+                        >
+                          -
+                        </button>
+                        <span className="flex h-9 min-w-[7.75rem] items-center justify-center border-x border-neutral-300 px-2 text-xs uppercase tracking-wide">
+                          {quantityLabel}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.variant_id, item.quantity + 1)}
+                          className="h-9 w-9 text-lg text-neutral-700 transition-colors hover:bg-neutral-100"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <p className="text-sm uppercase tracking-wide text-black">
+                        {lineTotalLabel}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
 
             <div className="border-t border-neutral-200 pt-6">
               <Link

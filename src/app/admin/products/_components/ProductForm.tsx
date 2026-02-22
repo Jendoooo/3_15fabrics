@@ -26,6 +26,12 @@ export default function ProductForm({ product, variants: initialVariants = [] }:
   const [careInstructions, setCareInstructions] = useState(product?.care_instructions ?? '');
   const [fitNotes, setFitNotes] = useState(product?.fit_notes ?? '');
   const [status, setStatus] = useState(product?.status ?? 'draft');
+  const [unitType, setUnitType] = useState<'yard' | 'bundle'>(
+    (product?.unit_type as 'yard' | 'bundle') ?? 'yard'
+  );
+  const [minimumQuantity, setMinimumQuantity] = useState<number>(product?.minimum_quantity ?? 1);
+  const [fabricType, setFabricType] = useState<string>(product?.fabric_type ?? '');
+  const [gender, setGender] = useState<'men' | 'women' | 'unisex'>((product?.gender ?? 'unisex') as 'men' | 'women' | 'unisex');
   const [collectionId, setCollectionId] = useState(product?.collection_id ?? '');
   const [isFeatured, setIsFeatured] = useState(product?.is_featured ?? false);
   const [imageRows, setImageRows] = useState<string[]>(['']);
@@ -116,6 +122,10 @@ export default function ProductForm({ product, variants: initialVariants = [] }:
       care_instructions: careInstructions || null,
       fit_notes: fitNotes || null,
       status,
+      unit_type: unitType,
+      minimum_quantity: minimumQuantity,
+      fabric_type: fabricType || null,
+      gender,
       collection_id: collectionId || null,
       is_featured: isFeatured,
     };
@@ -233,6 +243,77 @@ export default function ProductForm({ product, variants: initialVariants = [] }:
             </select>
           </div>
         </div>
+        <div>
+          <label className="mb-1 block text-xs uppercase tracking-widest">Fabric Type</label>
+          <select
+            value={fabricType}
+            onChange={(e) => setFabricType(e.target.value)}
+            className="w-full border border-neutral-200 bg-white px-3 py-2 text-sm"
+          >
+            <option value="">- Select Fabric Type -</option>
+            <option value="Ankara">Ankara</option>
+            <option value="French Lace">French Lace</option>
+            <option value="Swiss Voile">Swiss Voile</option>
+            <option value="Senator">Senator</option>
+            <option value="Aso-Oke">Aso-Oke</option>
+            <option value="Cotton">Cotton</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs uppercase tracking-widest">Gender</label>
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value as 'men' | 'women' | 'unisex')}
+            className="w-full border border-neutral-200 bg-white px-3 py-2 text-sm"
+          >
+            <option value="unisex">Unisex</option>
+            <option value="women">Women</option>
+            <option value="men">Men</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs uppercase tracking-widest">Sold By</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                value="yard"
+                checked={unitType === 'yard'}
+                onChange={() => setUnitType('yard')}
+              />
+              Per Yard
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                value="bundle"
+                checked={unitType === 'bundle'}
+                onChange={() => setUnitType('bundle')}
+              />
+              Bundle Only (fixed set)
+            </label>
+          </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs uppercase tracking-widest">
+            {unitType === 'yard' ? 'Minimum Yards to Order' : 'Bundle Size (total yards in set)'}
+          </label>
+          <input
+            type="number"
+            min={0.5}
+            step={0.5}
+            value={minimumQuantity}
+            onChange={(e) => setMinimumQuantity(parseFloat(e.target.value) || 1)}
+            className="w-full border border-neutral-200 px-3 py-2 text-sm"
+            placeholder={unitType === 'yard' ? 'e.g. 5' : 'e.g. 6'}
+          />
+          <p className="mt-1 text-xs text-neutral-500">
+            {unitType === 'yard'
+              ? 'Customers cannot order fewer yards than this.'
+              : 'The number of yards included in this bundle set.'}
+          </p>
+        </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="h-4 w-4" />
           Featured product (show on homepage)
@@ -267,7 +348,7 @@ export default function ProductForm({ product, variants: initialVariants = [] }:
       {/* Variants */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs uppercase tracking-widest text-neutral-500">Sizes / Variants</h2>
+          <h2 className="text-xs uppercase tracking-widest text-neutral-500">Colorway / Pattern</h2>
           <button type="button" onClick={addVariant}
             className="text-xs uppercase tracking-widest underline hover:text-neutral-600">
             + Add Variant
@@ -276,9 +357,11 @@ export default function ProductForm({ product, variants: initialVariants = [] }:
         {variants.map((v, i) => (
           <div key={i} className="grid grid-cols-4 gap-2 items-end">
             <div>
-              <label className="mb-1 block text-[10px] uppercase tracking-widest text-neutral-400">Size</label>
-              <input value={v.size} onChange={(e) => updateVariant(i, 'size', e.target.value)} placeholder="XL"
-                className="w-full border border-neutral-300 p-2 text-sm focus:border-black focus:outline-none" />
+              <label className="mb-1 block text-[10px] uppercase tracking-widest text-neutral-400">
+                Colorway / Pattern
+              </label>
+              <input value={v.size} onChange={(e) => updateVariant(i, 'size', e.target.value)} placeholder="(not used for fabrics)"
+                className="w-full border border-neutral-300 p-2 text-sm opacity-50 focus:border-black focus:outline-none" />
             </div>
             <div>
               <label className="mb-1 block text-[10px] uppercase tracking-widest text-neutral-400">Color</label>

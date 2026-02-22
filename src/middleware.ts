@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-    const adminSession = request.cookies.get('iby_admin_session')?.value;
+    const adminSession = request.cookies.get('315fabrics_admin_session')?.value;
     const isLoginPage = request.nextUrl.pathname === '/admin/login';
 
     // Allow access to login page

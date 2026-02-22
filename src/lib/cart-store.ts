@@ -11,6 +11,8 @@ export type CartItem = {
   unit_price: number;
   quantity: number;
   image_url: string;
+  unit_type: 'yard' | 'bundle';
+  minimum_quantity: number;
 };
 
 type CartState = {
@@ -55,10 +57,10 @@ export const useCartStore = create<CartState>()(
             (cartItem) => cartItem.variant_id === item.variant_id
           )
             ? state.items.map((cartItem) =>
-                cartItem.variant_id === item.variant_id
-                  ? { ...cartItem, quantity: cartItem.quantity + nextQty }
-                  : cartItem
-              )
+              cartItem.variant_id === item.variant_id
+                ? { ...cartItem, quantity: cartItem.quantity + nextQty }
+                : cartItem
+            )
             : [...state.items, { ...item, quantity: nextQty }];
 
           return {
@@ -83,10 +85,10 @@ export const useCartStore = create<CartState>()(
             normalizedQty === 0
               ? state.items.filter((item) => item.variant_id !== variant_id)
               : state.items.map((item) =>
-                  item.variant_id === variant_id
-                    ? { ...item, quantity: normalizedQty }
-                    : item
-                );
+                item.variant_id === variant_id
+                  ? { ...item, quantity: normalizedQty }
+                  : item
+              );
 
           return {
             items,
@@ -101,7 +103,7 @@ export const useCartStore = create<CartState>()(
         }),
     }),
     {
-      name: 'iby-closet-cart',
+      name: '315fabrics-cart',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         items: state.items,

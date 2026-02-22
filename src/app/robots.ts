@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
                 disallow: ['/admin', '/admin/*', '/api'],
             },
         ],
-        sitemap: 'https://iby-closet.com/sitemap.xml',
+        sitemap: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/sitemap.xml`,
     };
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/lib/cart-store';
 import { Menu, X, Instagram } from 'lucide-react';
@@ -30,7 +29,7 @@ export default function Header() {
 
     const utilityLinks = [
         { href: '/faq', label: 'FAQ' },
-        { href: '/size-guide', label: 'Size Guide' },
+        { href: '/yardage-guide', label: 'Yardage Guide' },
         { href: '/track', label: 'Track Order' },
         { href: '/cart', label: `Cart (${mounted ? totalItems : 0})` },
     ];
@@ -58,14 +57,7 @@ export default function Header() {
 
                     {/* Logo — centred on mobile */}
                     <Link href="/" className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
-                        <Image
-                            src="/logo-black.png"
-                            alt="iby_closet"
-                            width={160}
-                            height={40}
-                            className="h-8 w-auto mix-blend-multiply"
-                            priority
-                        />
+                        <span className="text-sm font-light uppercase tracking-[0.25em] text-black">315 Fabrics</span>
                     </Link>
 
                     <div className="flex items-center gap-6">
@@ -95,13 +87,7 @@ export default function Header() {
                 {/* Panel header */}
                 <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0">
                     <Link href="/" onClick={closeMenu}>
-                        <Image
-                            src="/logo-white.png"
-                            alt="iby_closet"
-                            width={100}
-                            height={26}
-                            className="h-6 w-auto opacity-80"
-                        />
+                        <span className="text-sm font-light uppercase tracking-[0.25em] text-white/80">315 Fabrics</span>
                     </Link>
                     <button
                         onClick={closeMenu}
@@ -146,13 +132,13 @@ export default function Header() {
                 {/* Bottom — social */}
                 <div className="shrink-0 px-6 pb-8 pt-4 border-t border-white/[0.07]">
                     <a
-                        href="https://instagram.com/iby_closet"
+                        href="https://instagram.com/3_15fabrics"
                         target="_blank"
                         rel="noreferrer"
                         className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-white/30 hover:text-white/60 transition-colors"
                     >
                         <Instagram className="w-3.5 h-3.5" />
-                        @iby_closet
+                        @3_15fabrics
                     </a>
                 </div>
             </div>

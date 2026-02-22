@@ -1,4 +1,4 @@
-# task.md — iby_closet Shared Task Board
+# task.md — 315 Fabrics Shared Task Board
 
 **All agents (Claude, Gemini, Codex) read this file.**
 **All agents mark their OWN tasks done directly in this file.**
@@ -21,250 +21,339 @@
 
 | Agent | Responsibility |
 |---|---|
-| **Gemini** | Backend + data layer: Supabase client, TypeScript types, all API routes, webhooks, delivery API |
-| **Codex** | Frontend + state: Zustand cart, connecting all UI pages to real data, Paystack UI, tracking UI |
-| **Claude** | Senior engineer + auditor: reviews all code, fixes bugs, builds Admin panel, handles architecture |
+| **Gemini** | Backend + data layer: schema migrations, TypeScript types, all API routes, email templates, lib/ utilities |
+| **Codex** | Frontend + state: Zustand cart store UI, all customer-facing page components, admin form fields |
+| **Claude** | Senior engineer + auditor: reviews all code, fixes bugs, architecture decisions, assigns new batches |
 
 ---
 
 ## Unassigned Queue
 *(Staging area — Claude moves items into agent sections when ready)*
 
-- [x] Admin: set up route group `src/app/admin/` with Supabase Auth middleware — Done (via G15 cookie-based auth)
-- [x] Admin: Orders dashboard — Done (Claude built)
-- [x] Admin: Order detail page — Done (Claude built)
-- [x] Admin: Manual order entry form — Done (G11)
-- [x] Admin: Quick Sale screen — Done (G12)
-- [x] Admin: Products CRUD — Done (Claude built)
-- [x] Admin: Collections CRUD — Done (G9)
-- [x] Admin: Contacts list — Done (G10)
-- [x] Set up PostHog analytics — Done (C17)
-- [x] Set up Upstash Redis caching — Done (G16)
+- [ ] Visual redesign: warm earth tones, gold accents, celebratory palette (Tailwind config + globals.css)
+- [ ] Admin session cookie rename: `iby_admin_session` → `315fabrics_admin_session` (across middleware, auth route, all API routes)
+- [ ] Delete `/size-guide` route (replaced by `/yardage-guide`)
+- [ ] Cart page: update display to show "X yards" unit label and line total for yard-type items
+- [ ] Checkout page: review and update any hardcoded iby_closet copy (success messages, labels)
+- [ ] FAQ page: rewrite content for fabric store (shipping, bundles, yardage questions)
+- [ ] Contact page: update WhatsApp number to 2349066609177, Instagram to @3_15fabrics
+- [ ] Track page: update "IBY-" to "315-" in the help text / order format example
+- [ ] Public /collections page: update to show fabric categories (populate from seeded categories)
+- [ ] Seed a test fabric product (yarn-based + bundle type) to verify the checkout flow end to end
+- [ ] Set up new Supabase project + run both migrations (infrastructure — user action, not code)
+- [ ] Set up new Paystack account for the sister's store (infrastructure — user action, not code)
+- [ ] Update .env.local with 315 Fabrics credentials (user action)
+- [ ] Replace logo images in /public with 315 Fabrics logo (when logo is available)
+- [ ] Admin: product bulk CSV template — update column headers for fabric fields (unit_type, fabric_type, minimum_quantity)
 
 ---
 
 ## GEMINI — Backend + Data Layer
 *(Work top-to-bottom. Mark each done before starting the next.)*
 
-### Active
-- [x] **TASK G9:** Build Admin Collections CRUD. Create `src/app/admin/collections/page.tsx` — client component, fetch all collections from Supabase, show list with name/status/release_date, Edit and Delete buttons. Create `src/app/admin/collections/new/page.tsx` and `src/app/admin/collections/[id]/page.tsx` — form with fields: name, slug (auto from name), description, cover_image (URL), status dropdown (draft/upcoming/active/archived), release_date, is_featured checkbox. On save: upsert to `collections` table. On delete: remove from DB. Keep same visual style as products admin (border cards, uppercase tracking-widest labels). | Done: 2026-02-21 06:19
+### Batch 1 — Assigned 2026-02-22
 
-- [x] **TASK G10:** Build Admin Contacts page at `src/app/admin/contacts/page.tsx`. Client component. Fetch all contacts from `contacts` table ordered by `created_at` desc. Display: table/list with email, whatsapp_number, source badge, subscribed status, date. Add: (1) Filter by source (all / waitlist / newsletter / checkout / footer / walk_in), (2) Export CSV button — generates CSV of filtered contacts and triggers browser download, (3) WhatsApp Broadcast section at top — textarea for message, checkbox list to select contacts with whatsapp_number, Send button that calls Fonnte API (`POST https://api.fonnte.com/send` with header `Authorization: {FONNTE_TOKEN}` and body `{ target: comma-separated numbers, message, delay: 3, countryCode: '234' }`). Use `fetch` to call Fonnte from the browser (FONNTE_TOKEN is `NEXT_PUBLIC_FONNTE_TOKEN` for client use — add this var to .env.example and .env.local). Show success/error per send. | Done: 2026-02-21 06:19
+- [x] **TASK G1:** Create gender migration + update types.ts with all new fields. | Done: 2026-02-22 09:40
+  **Context:** Migration `20260222000001_315fabrics_schema.sql` already exists and was run in DB. Do NOT recreate it.
+  **(1)** Create `supabase/migrations/20260222000002_gender_column.sql`:
+  ```sql
+  ALTER TABLE products ADD COLUMN IF NOT EXISTS gender TEXT DEFAULT 'unisex'
+    CHECK (gender IN ('men', 'women', 'unisex'));
+  COMMENT ON COLUMN products.gender IS 'Intended wearer: men, women, or unisex';
+  ```
+  **(2)** Update `src/lib/types.ts` — add ALL new fields to existing types:
+  - In `Product` type: add `unit_type: string`, `minimum_quantity: number`, `fabric_type: string | null`, `gender: 'men' | 'women' | 'unisex'`
+  - In `OrderItem` type: add `yards_ordered: number | null`
+  - Do not change any other types.
 
-- [x] **TASK G11:** Build Admin Manual Order Entry at `src/app/admin/orders/new/page.tsx`. Client component. Form fields: Source dropdown (instagram/whatsapp/walk_in/other), Customer name, phone, WhatsApp number, email. Delivery address fields: street, city, state dropdown (36 Nigerian states). Payment method (bank_transfer/cash/pos_terminal). Notes textarea. Items section: text input to type product name, fetch matching products from Supabase as user types (debounce 300ms, query `.ilike('name', '%term%')`), click a result to select it, then show variant selector (fetch variants for selected product), add to items list with quantity field. Show running subtotal. On submit: POST to `/api/orders` with all fields + `source` from dropdown. On success: show order number in large text with link to `/admin/orders/[id]`. | Done: 2026-02-21 06:19
+- [x] **TASK G2:** Backend branding overhaul + cart-store lib update. | Done: 2026-02-22 09:41
+  **(1) `src/app/api/orders/route.ts`:** Change order number prefix from `IBY-` to `315-`. Find where the random alphanumeric string is assembled and change only the prefix string. Also: when inserting each item into `order_items`, include `yards_ordered: item.yards_ordered ?? item.quantity` (use quantity as fallback since for fabrics quantity IS yards).
+  **(2) `src/lib/email.ts`:** Read the file. Replace ALL occurrences of `iby_closet`, `iby closet`, `IBY`, `iby-closet`, `Ibrahim Hamed` with `315 Fabrics` (or `315fabrics` in slugs/IDs). Update sender/from name to "315 Fabrics". Replace old WhatsApp number with `2349066609177`. Verify tracking links use `NEXT_PUBLIC_APP_URL` (don't change if they already do).
+  **(3) `src/lib/cart-store.ts`:** Add `unit_type: 'yard' | 'bundle'` and `minimum_quantity: number` to the `CartItem` type. Change the persist storage key from `'iby-closet-cart'` to `'315fabrics-cart'` (in the `name:` field of the `persist` config). No changes to addItem/removeItem/updateQuantity/getTotals logic.
+  **(4) `src/app/api/delivery/calculate/route.ts`:** Find "Iby Logistics Same-day" (or any similar "Iby" label) and rename to "315 Fabrics Delivery". Update any other "iby" references in service option labels.
+  **(5) `package.json`:** Change `"name": "iby_closet"` to `"name": "315-fabrics"`.
 
-- [x] **TASK G12:** Build Admin Quick Sale screen at `src/app/admin/quick-sale/page.tsx`. Client component — walk-in POS. Left panel: search input for products (query Supabase `.ilike` on name, debounce 300ms), show results as clickable cards, on click show variant/size buttons, on variant click add to current sale. Right panel: sale items list (product name, size, qty +/-, unit price, remove button), subtotal, payment method selector (Cash / POS Terminal), optional customer name field, "Complete Sale" button. On complete: POST to `/api/orders` with `source: 'walk_in'`, `payment_method` from selector. On success: show large "Sale Complete — IBY-XXXXXXXX" confirmation screen with "New Sale" button to reset. Keep mobile-friendly — Ibrahim will use this on his phone at the physical store. | Done: 2026-02-21 06:19
+- [x] **TASK G3:** Seed fabric categories + fix hardcoded URLs. | Done: 2026-02-22 09:41
+  **(1)** Create `scripts/seed_fabric_categories.js`. Follow the exact pattern of other scripts in `/scripts/` (load `.env.local` with dotenv, use `@supabase/supabase-js` createClient with service role key). Insert 6 categories using `.upsert([...], { onConflict: 'slug' })`:
+  ```js
+  [
+    { name: 'Ankara & African Print', slug: 'ankara-african-print', sort_order: 1 },
+    { name: 'French Lace & Swiss Voile', slug: 'french-lace-swiss-voile', sort_order: 2 },
+    { name: 'Aso-Oke & Traditional', slug: 'asoke-traditional', sort_order: 3 },
+    { name: 'Senator & Corporate', slug: 'senator-corporate', sort_order: 4 },
+    { name: 'Wedding & Asoebi', slug: 'wedding-asoebi', sort_order: 5 },
+    { name: 'New Arrivals', slug: 'new-arrivals', sort_order: 6 },
+  ]
+  ```
+  Log success or error. Do NOT run the script — just create it. (Running requires real Supabase credentials.)
+  **(2)** Edit `src/app/sitemap.ts`: Replace the hardcoded `https://iby-closet.com` base URL constant with `const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';`. Use `BASE_URL` throughout.
+  **(3)** Edit `src/app/robots.ts`: Replace the hardcoded sitemap URL with `` `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/sitemap.xml` ``.
 
-- [x] **TASK G13:** Build `POST /api/waitlist` route at `src/app/api/waitlist/route.ts`. Body: `{ email?, whatsapp_number?, collection_id?, product_id? }`. Validate: at least one of email or whatsapp_number must be present. Insert into `waitlist` table (all fields nullable except auto-generated id and created_at). Use `supabaseServer`. Return `{ success: true }` or `{ error }` with status 400/500. No upsert needed — duplicate sign-ups are fine for the waitlist. | Done: 2026-02-21 08:00
+### Batch 2 — Assigned 2026-02-22
 
-- [x] **TASK G14:** Seed the "Rhythm & Thread" collection and product variants. Create `scripts/seed_collection_and_variants.js` (Node.js, CommonJS, reads `.env.local` same pattern as other scripts in `/scripts/`). Do three things: **(1) Insert collection**: `{ name: 'Rhythm & Thread', slug: 'rhythm-and-thread', description: 'A collection that blends rhythm and structure — from tank tops to tailored jackets. Every piece tells a story of movement and craft.', status: 'active', is_featured: true }` into `collections` table. Get back the `id`. **(2) Link all active products** to this collection: `UPDATE products SET collection_id = [id] WHERE status = 'active'`. **(3) Seed product variants** — for every active product, check if it already has variants (skip if yes). Insert variants using the product's name to decide sizes: if name contains "loafer" or "shoe" → sizes 40, 41, 42, 43, 44, 45 (stock_quantity 5 each); if name contains "cap" or "hat" → one variant size "One Size" (stock_quantity 20); all other products → sizes XS, S, M, L, XL (stock_quantity 10 each). color: null, price_modifier: 0. Run the script directly: `node scripts/seed_collection_and_variants.js`. Log results. DO NOT modify any existing products or images. | Done: 2026-02-21 08:05
-
-- [x] **TASK G15:** Add Supabase Auth protection to the admin panel. **(1)** Create `src/middleware.ts` at the project root (not inside src/app). Use Next.js `NextResponse` to intercept requests matching `/admin/:path*`. Check for a cookie named `iby_admin_session`. If missing, redirect to `/admin/login`. If present, verify it equals the value of `process.env.ADMIN_SESSION_SECRET` (a simple shared secret — no JWT needed for now). Add `ADMIN_SESSION_SECRET` to `.env.example` with placeholder. **(2)** Update `src/app/admin/login/page.tsx` — it already exists as a UI shell. Make it functional: add `'use client'`, wire the form to call a server action or API route `POST /api/admin/auth` with `{ password }`. Build that API route at `src/app/api/admin/auth/route.ts`: check `password === process.env.ADMIN_PASSWORD`, if correct set a cookie `iby_admin_session=[ADMIN_SESSION_SECRET]` (httpOnly, path=/admin, maxAge 86400*7), return `{ success: true }`. Add `ADMIN_PASSWORD` to `.env.example`. **(3)** Add a logout button to the admin sidebar (`src/app/admin/_components/` or directly in the layout) that clears the `iby_admin_session` cookie and redirects to `/admin/login`. Keep things simple — no Supabase Auth needed, cookie-based password auth is enough for now. | Done: 2026-02-21 08:30
-
-### Batch 3 — Assigned 2026-02-21
-
-- [x] **TASK G16:** Set up Upstash Redis caching for server-side data fetches. (1) Create `src/lib/redis.ts` — import `Redis` from `@upstash/redis`, export a singleton instance using `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from env. (2) Create `src/lib/cache.ts` — export a helper: `async function cachedFetch<T>(key: string, fetcher: () => Promise<T>, ttlSeconds = 300): Promise<T>`. Logic: try `redis.get(key)`, if found return parsed JSON. If not, call `fetcher()`, store result with `redis.set(key, JSON.stringify(result), { ex: ttlSeconds })`, return result. On Redis error, fall through to fetcher (don't break the site if Redis is down). (3) Update `src/app/(site)/shop/page.tsx` — wrap the products+images fetch in `cachedFetch('shop:products', async () => { ... })` with 5-min TTL. (4) Update `src/app/(site)/page.tsx` — wrap featured products and collections fetch in `cachedFetch('home:featured', ...)`. Keep the existing logic unchanged — just wrap it. | Done: 2026-02-21 08:24
-
-- [x] **TASK G17:** Build email order confirmation via Resend. (1) Create `src/lib/email.ts` — import `Resend` from `resend`, init with `RESEND_API_KEY`. Export `sendOrderConfirmation(to: string, orderNumber: string, items: {name: string, size: string, qty: number, price: number}[], total: number)`. Send a simple HTML email: subject "iby_closet — Order {orderNumber} Confirmed", from `orders@iby-closet.com` (or your verified Resend domain), body with order number, items table, total, and "Track your order at iby-closet.com/track". (2) Call `sendOrderConfirmation` from `POST /api/orders` route after successful order creation — wrap in try/catch so email failure doesn't break the order flow. (3) Also call it from `POST /api/paystack/webhook` when `charge.success` fires, if order has an email. | Done: 2026-02-21 08:25
-
-### Batch 4 — Assigned 2026-02-21
-
-- [x] **TASK G18:** Add international delivery support to `POST /api/delivery/calculate` at `src/app/api/delivery/calculate/route.ts`. Currently only handles Nigerian states. Update to: (1) Accept optional `country` field in request body (default: `'Nigeria'`). (2) If country is `'Nigeria'`, keep existing Lagos/non-Lagos pricing. (3) If country is NOT Nigeria, return international options: `[{ courier: 'DHL Express', service: 'International Express', fee: 25000, estimated_days: '7-14 business days' }, { courier: 'iby_closet', service: 'International Standard', fee: 15000, estimated_days: '14-21 business days' }]`. (4) Update the TypeScript request type to include `country?: string`. Keep backward compatibility — existing callers that don't send `country` should still work. | Done: 2026-02-21 08:40
-
-- [x] **TASK G19:** Set up API route testing with Vitest. (1) Run `npm install -D vitest @vitejs/plugin-react` in the project root. (2) Create `vitest.config.ts` at project root: configure with `environment: 'node'`, path aliases matching `tsconfig.json` (`@/` → `src/`). (3) Create `__tests__/api/delivery.test.ts` — test the delivery calculate route logic: mock request with Lagos state → expect fee options, mock request with non-Lagos state → expect different fees, mock request with `country: 'Ghana'` → expect international fees. (4) Create `__tests__/api/orders.test.ts` — test order number generation format (`IBY-YYYYXXXX`), test that missing items returns 400. (5) Add `"test": "vitest run"` and `"test:watch": "vitest"` to `package.json` scripts. (6) Create `__tests__/setup.ts` — mock Supabase client for tests. Export mock that returns configurable data. | Done: 2026-02-21 08:42
-
-### Batch 5 — Assigned 2026-02-21
-
-- [x] **TASK G20:** Add mobile hamburger menu to `src/components/Header.tsx`. Currently the nav links (Shop, Collections, Brand) are hidden on mobile (`hidden md:flex`). Add: (1) A hamburger icon button visible only on mobile (use a simple 3-line SVG or three `<span>` elements styled as lines). (2) When clicked, open a full-screen overlay menu with dark background (bg-black/95 text-white). (3) Menu links: Shop, Collections, Brand, Lookbook, Size Guide, FAQ, Contact, Track Order. Each link closes the menu on click. (4) Add a close (X) button at top-right. (5) Use `useState` with `isMenuOpen`. (6) Prevent body scroll when menu is open (`document.body.style.overflow = 'hidden'/'auto'`). (7) Keep the existing desktop nav layout unchanged. The header already has `'use client'` — just add the state and mobile menu JSX. | Done: 2026-02-21 09:22
-
-- [x] **TASK G21:** Create a reusable `<ProductCard>` component at `src/components/ProductCard.tsx` to eliminate duplicated product card code. Currently the same card layout (image, name, price, link) is repeated in `src/app/(site)/shop/page.tsx`, `src/app/(site)/page.tsx`, `src/app/(site)/collections/[slug]/page.tsx`, and `src/app/(site)/shop/[category-slug]/page.tsx`. (1) Create the component: Props: `{ slug: string, name: string, price: number, imageUrl: string | null }`. Renders: `<Link href={/products/${slug}}>` wrapping an image (aspect-[4/5], bg-neutral-100 fallback, Next.js `<Image>` with `fill` + `object-cover`) and product info (name uppercase tracking-widest, price ₦-formatted). (2) Update all 4 pages to import and use `<ProductCard>` instead of inline card JSX. (3) Keep all existing styles. (4) Add a hover effect: subtle scale-up on the image (`group-hover:scale-105 transition-transform duration-500`). | Done: 2026-02-21 09:27
-
-### Completed
-- [x] Initialize Next.js 14 App Router project (TypeScript, Tailwind CSS) | Done: 2026-02-21 04:44
-- [x] Install core dependencies: @supabase/supabase-js, react-paystack, resend, cloudinary, posthog-js, @upstash/redis, lucide-react, date-fns | Done: 2026-02-21 04:44
-- [x] Create Supabase schema migration `supabase/migrations/20240221000000_initial_schema.sql` | Done: 2026-02-21 04:44
-- [x] Scaffold base UI pages: shop, collections, product detail [slug], cart, checkout, checkout/success, track | Done: 2026-02-21 05:15
-- [x] Create Header component (`src/components/Header.tsx`) | Done: 2026-02-21 05:15
-- [x] Create Footer component (`src/components/Footer.tsx`) | Done: 2026-02-21 05:15
-
-### Active
-- [x] **TASK G1:** Create `.env.example` at project root. Include ALL required env vars with placeholder values and comments. Vars needed: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY`, `PAYSTACK_SECRET_KEY`, `RESEND_API_KEY`, `FONNTE_TOKEN`, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Done: 2026-02-21 05:40
-
-- [x] **TASK G2:** Create `src/lib/supabase.ts`. Export two clients: (1) `supabaseBrowser` using `createClient` from `@supabase/supabase-js` for client components, (2) `supabaseServer` using service role key for API routes/server actions. Use env vars from `.env.example`. Add `Database` generic type (placeholder `any` for now — types come in G3). | Done: 2026-02-21 05:40
-
-- [x] **TASK G3:** Create `src/lib/types.ts`. Export TypeScript interfaces matching the Supabase DB schema exactly: `Product`, `ProductVariant`, `ProductImage`, `Collection`, `Category`, `Customer`, `Address`, `Order`, `OrderItem`, `DeliveryTracking`, `Contact`, `Waitlist`, `AbandonedCart`. Reference schema at `supabase/migrations/20240221000000_initial_schema.sql`. Use `string` for UUIDs, `number` for NUMERIC, `string` for TIMESTAMPTZ. | Done: 2026-02-21 05:40
-
-- [x] **TASK G4:** Build `POST /api/contacts` route at `src/app/api/contacts/route.ts`. Body: `{ email?, whatsapp_number?, first_name?, last_name?, source }`. Logic: upsert into `contacts` table by email OR whatsapp_number (whichever is provided). Use `supabaseServer`. Return `{ success: true, id }` or `{ error }` with appropriate status codes. | Done: 2026-02-21 05:40
-
-- [x] **TASK G5:** Build `POST /api/orders` route at `src/app/api/orders/route.ts`. Body: `{ customer_name, customer_email, customer_phone, customer_whatsapp, delivery_address, items: [{product_id, variant_id, product_name, size, color, quantity, unit_price}], delivery_fee, payment_method }`. Logic: (1) generate order number `IBY-${year}${4-digit-sequence}` — query max order number for current year, increment, (2) insert into `orders` table, (3) insert all items into `order_items`, (4) upsert customer into `contacts` table with source `checkout`, (5) return `{ order_number, order_id }`. | Done: 2026-02-21 05:40
-
-- [x] **TASK G6:** Build `GET /api/orders/[orderNumber]` at `src/app/api/orders/[orderNumber]/route.ts`. Lookup order by `order_number` (public — no auth). Return order + all `order_items` + all `delivery_tracking` rows ordered by `updated_at`. Return 404 if not found. No sensitive customer data in response (omit email, phone). | Done: 2026-02-21 05:40
-
-- [x] **TASK G7:** Build `POST /api/paystack/webhook` at `src/app/api/paystack/webhook/route.ts`. (1) Verify `x-paystack-signature` header using HMAC SHA512 with `PAYSTACK_SECRET_KEY`, (2) handle `charge.success` event: find order by `payment_reference`, set `payment_status = paid`, set `status = confirmed`, (3) insert a row into `delivery_tracking` with status `confirmed` and note `Payment confirmed via Paystack`, (4) return 200. Reject invalid signatures with 401. | Done: 2026-02-21 05:40
-
-- [x] **TASK G8:** Build `POST /api/delivery/calculate` at `src/app/api/delivery/calculate/route.ts`. Body: `{ state, city, subtotal }`. For now, return hardcoded fee options (real courier API integration comes later): Lagos same-day ₦3,500, Lagos next-day ₦2,500, Outside Lagos ₦5,000. Return `{ options: [{courier, service, fee, estimated_days}] }`. Use state to determine Lagos vs outside. | Done: 2026-02-21 05:40
+- [x] **TASK G4:** Instagram import pipeline — seed draft products from `IGPOSTS_USERS_3_15fabrics_100.xlsx`. | Done: 2026-02-22 09:43
+  **Create `scripts/seed_from_instagram.js`.**
+  **(0) Check dependencies.** If `xlsx`, `cloudinary`, `node-fetch` (or `axios`) are not in `package.json`, install them as dev dependencies: `npm install --save-dev xlsx node-fetch`. `cloudinary` should already be present.
+  **(1) Script setup.** Follow the same dotenv + supabase pattern as other scripts in `/scripts/`. Also initialise Cloudinary: `cloudinary.config({ cloud_name: process.env.CLOUDINARY_CLOUD_NAME, api_key: process.env.CLOUDINARY_API_KEY, api_secret: process.env.CLOUDINARY_API_SECRET })`.
+  **(2) Read the Excel.** `const wb = XLSX.readFile('./IGPOSTS_USERS_3_15fabrics_100.xlsx'); const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);`
+  **(3) For each row where `row['Is Video'] !== 'YES'`:**
+  - Build product data:
+    - `name`: first 60 chars of `row['Caption']`, trimmed and emoji-stripped; fallback to `'Fabric Post'` if null/empty
+    - `slug`: `row['Shortcode']` (already unique and URL-safe)
+    - `description`: `row['Caption'] ?? null`
+    - `status`: `'draft'`
+    - `unit_type`: `'yard'`
+    - `minimum_quantity`: 1
+    - `is_featured`: false
+    - `price`: 0 (placeholder — Ayodei sets real prices in admin)
+    - `fabric_type`: keyword-scan Caption for "Ankara","Lace","Voile","Aso-Oke","Senator","Cotton" → set matching value or null
+    - `gender`: `'unisex'`
+  - **Image handling:**
+    - Primary image URL = `row['Thumbnail URL']` (always present for non-video posts)
+    - For carousel posts (`row['Is Carousel'] === 'YES'`), additional URLs = `row['Image URLs']?.split('\n').filter(Boolean) ?? []`
+    - All image URLs to process = `[thumbnailUrl, ...carouselUrls].filter(Boolean).slice(0, 4)` (cap at 4)
+    - For each image URL: download with `node-fetch`, pipe to `cloudinary.uploader.upload_stream({ folder: '315fabrics/instagram', public_id: shortcode + '_' + index })`. Capture returned `secure_url`.
+  - **Insert to DB:**
+    - Upsert product: `supabase.from('products').upsert({ ...productData }, { onConflict: 'slug' })` — skip if exists
+    - For each uploaded Cloudinary URL: insert into `product_images`: `{ product_id, image_url: cloudinaryUrl, is_primary: (index === 0), sort_order: index }`
+  - Log: `✓ Created: [name] | slug: [slug]` or `⚠ Skipped (exists): [slug]` or `✗ Error: [slug] — [message]`
+  **(4) Summary log at end:** `Done. Created: X, Skipped: Y, Errors: Z`
+  **Do NOT run the script** — just create it. Tell user to run `node scripts/seed_from_instagram.js` after adding Cloudinary env vars.
 
 ---
 
 ## CODEX — Frontend + State Layer
-*(Work top-to-bottom. Mark each done before starting the next. Read `src/lib/types.ts` before starting — Gemini builds it in G3.)*
+*(Work top-to-bottom. Mark each done before starting the next. Read `src/lib/types.ts` and `src/lib/cart-store.ts` for current types.)*
 
-### Completed
-*(none yet)*
+### Batch 1 — Assigned 2026-02-22
 
-### Active
-- [x] **TASK C1:** Install Zustand: run `npm install zustand`. Create `src/lib/cart-store.ts`. CartItem type: `{ product_id, variant_id, product_name, size, color, unit_price, quantity, image_url }`. Store: `items[]`, `addItem(item)` (increment qty if same variant exists), `removeItem(variant_id)`, `updateQuantity(variant_id, qty)`, `clearCart()`, computed `totalItems`, computed `subtotal`. Persist to `localStorage` using Zustand persist middleware. | Done: 2026-02-21 05:43
+- [x] **TASK C1:** Rewrite `src/app/(site)/products/[slug]/ProductPurchasePanel.tsx` for fabric purchasing. Read the existing file first. | Done: 2026-02-22 09:46
+  **New props:** Add `unitType: 'yard' | 'bundle'` and `minimumQuantity: number` to `ProductPurchasePanelProps`.
+  **Remove size selector entirely.** Replace with a **Colourway selector**: label "Colourway", one button per variant showing `variant.color ?? 'Default'`. Selected state: `border-black bg-black text-white`.
+  **Yard-type UX (`unitType === 'yard'`):** Numeric input (type="number", min=minimumQuantity, max=selectedVariant?.stock_quantity, step=0.5, default=minimumQuantity). Label: "Yards". Show line total text: `"{yards} yards × ₦{unitPrice.toLocaleString('en-NG')} = ₦{(yards * unitPrice).toLocaleString('en-NG')}"`. Show stock: `"{selectedVariant.stock_quantity} yards in stock"`. Button: "Add to Cart".
+  **Bundle-type UX (`unitType === 'bundle'`):** No quantity input. Show `"Complete set — {minimumQuantity} yards"`. Quantity locked at 1. Button: "Order This Bundle".
+  **WhatsApp fallback (no variants):** Keep existing "Enquire on WhatsApp" CTA.
+  **addItem call:** `quantity` = yards entered (yard) or 1 (bundle). Include `unit_type: unitType`, `minimum_quantity: minimumQuantity` in the item object.
+  **Also update `src/app/(site)/products/[slug]/page.tsx`:** Pass `unitType={(productData.unit_type ?? 'yard') as 'yard' | 'bundle'}` and `minimumQuantity={productData.minimum_quantity ?? 1}` to `<ProductPurchasePanel>`.
 
-- [x] **TASK C2:** Update `src/components/Header.tsx` — import cart store, replace static `Cart (0)` with live `Cart ({totalItems})` from Zustand. Add `'use client'` directive. Keep all existing styles. | Done: 2026-02-21 05:48
+- [x] **TASK C2:** Global branding + copy updates. *(Items 1-5, 7-9 completed by Claude 2026-02-22. Only item 6 (yardage guide page) remains — see C5.)* | Done: 2026-02-22 (partial — see C5 for remainder)
 
-- [x] **TASK C3:** Build Shop page `src/app/shop/page.tsx`. Fetch all products where `status = active` from Supabase (server component). For each product, fetch its primary image from `product_images`. Render a 4-col grid (2-col mobile). Each card: image (aspect-[4/5], bg-neutral-100 if no image), product name (uppercase tracking-widest text-sm), price (₦XX,XXX format), links to `/products/[slug]`. Keep the editorial header style from the existing scaffold. | Done: 2026-02-21 05:50
+- [x] **TASK C3:** Add fabric-specific fields to admin product form. **File:** `src/app/admin/_components/ProductForm.tsx`. Read the entire file first. | Done: 2026-02-22 09:46
+  **Add useState** for: `unitType: 'yard' | 'bundle'` (default: product?.unit_type ?? 'yard'), `minimumQuantity: number` (default: product?.minimum_quantity ?? 1), `fabricType: string` (default: product?.fabric_type ?? '').
+  **Add 3 new form fields** after the Status field (match existing form styling — border cards, uppercase tracking-widest labels, border-neutral-200 inputs):
+  - Fabric Type: `<select>` with options: Ankara, French Lace, Swiss Voile, Senator, Aso-Oke, Cotton, Other
+  - Sold By: Radio buttons "Per Yard" (value: 'yard') / "Bundle Only" (value: 'bundle')
+  - Minimum Yards / Bundle Size: `<input type="number" min={0.5} step={0.5}>`. Label changes reactively: "Minimum Yards to Order" (yard) or "Bundle Size (total yards in set)" (bundle). Show helper text explaining the field.
+  **Variants section:** Rename "Size" column header → "Colorway / Pattern". Keep the size input field but add `placeholder="(not used for fabrics)"` and visually de-emphasize it (`opacity-50`).
+  **Form submission:** Include `unit_type: unitType`, `minimum_quantity: minimumQuantity`, `fabric_type: fabricType || null` in the product upsert/insert payload.
 
-- [x] **TASK C4:** Build Collections page `src/app/collections/page.tsx`. Fetch all collections where status in (`active`, `upcoming`) from Supabase (server component). Render editorial card grid: collection cover image (aspect-video), name, description (2-line clamp), status badge (UPCOMING in amber if upcoming), link to `/collections/[slug]`. Upcoming collections show "Notify Me" CTA instead of "Explore". | Done: 2026-02-21 05:56
+### Batch 2 — Assigned 2026-02-22
 
-- [x] **TASK C5:** Build Product detail page `src/app/products/[slug]/page.tsx`. Fetch product + variants + images by slug (server component). Layout: left = image gallery (primary image large, thumbnails row below), right = product name, price, collection name, description, size selector (buttons, one per variant in stock), add-to-cart button (calls `addItem` from cart store — needs `'use client'` for that section or a client wrapper component), fabric details + care instructions accordion. If product status is `sold_out`, show "Sold Out" and disable button. | Done: 2026-02-21 05:59
+- [x] **TASK C4:** Gender filter on shop page + gender field in admin product form. | Done: 2026-02-22 09:46
+  **File 1: `src/app/(site)/shop/page.tsx`** — Read first. Add gender filter pills above the product grid.
+  - The page is a server component that already accepts search params. Add `gender` to the destructured search params.
+  - Add filter to Supabase query: if `gender` param is `'men'`, `'women'`, or `'unisex'`, add `.eq('gender', gender)` to the products query.
+  - Render filter pills above the grid:
+    ```tsx
+    <div className="flex gap-2 mb-8">
+      {['all','men','women','unisex'].map((g) => (
+        <Link key={g} href={g === 'all' ? '/shop' : `/shop?gender=${g}`}
+          className={`px-4 py-1.5 text-xs uppercase tracking-widest border transition-colors ${
+            (gender ?? 'all') === g ? 'bg-black text-white border-black' : 'border-neutral-300 hover:border-black'
+          }`}>
+          {g === 'all' ? 'All' : g.charAt(0).toUpperCase() + g.slice(1)}
+        </Link>
+      ))}
+    </div>
+    ```
+  **File 2: `src/app/admin/_components/ProductForm.tsx`** — Add gender dropdown **after the Fabric Type field** (from C3). Add `const [gender, setGender] = useState<string>(product?.gender ?? 'unisex')` to state. Add this field:
+  ```tsx
+  <div>
+    <label className="mb-1 block text-xs uppercase tracking-widest">Gender</label>
+    <select value={gender} onChange={(e) => setGender(e.target.value)}
+      className="w-full border border-neutral-200 bg-white px-3 py-2 text-sm">
+      <option value="unisex">Unisex</option>
+      <option value="women">Women</option>
+      <option value="men">Men</option>
+    </select>
+  </div>
+  ```
+  Include `gender` in the product upsert/insert payload. Do not change any other form logic.
 
-- [x] **TASK C6:** Build Cart page `src/app/cart/page.tsx`. Client component (`'use client'`). Read from Zustand store. Layout: left = items list (image, name, size/color, qty controls +/-, remove button), right = order summary (subtotal, note about delivery calculated at checkout, proceed to checkout button). Empty state: "Your cart is empty" with link to /shop. | Done: 2026-02-21 06:04
+- [x] **TASK C5:** Create yardage guide page (left over from C2). | Done: 2026-02-22 09:46
+  **Create `src/app/(site)/yardage-guide/page.tsx`** — server component, no data fetching.
+  Export: `export const metadata: Metadata = { title: 'Yardage Guide' };`
+  Content layout (match visual style of `src/app/(site)/faq/page.tsx` — white bg, max-w-3xl, editorial padding):
+  - h1: "Yardage Guide"
+  - Intro paragraph: "Not sure how many yards you need? Here's a quick guide for common Nigerian styles."
+  - A clean table with columns "Style" and "Yards Needed":
+    | Buba + Iro (traditional) | 6–8 yards |
+    | Gown (fitted/midi) | 4–5 yards |
+    | Gown (maxi/flared) | 5–7 yards |
+    | Agbada (3-piece set) | 12–15 yards |
+    | Kaftan (men's) | 4–5 yards |
+    | Men's shirt | 2.5–3 yards |
+    | Trousers | 2–2.5 yards |
+    | Aso-Oke wrapper (per piece) | 2 yards |
+    | Asoebi group order | Contact us for bulk pricing |
+  - "Tips for Ordering" section (h2), then 3 bullet points:
+    - "When in doubt, buy an extra half yard — it's better to have extra than to run short."
+    - "For group asoebi orders, measure per outfit style and multiply by number of guests."
+    - "Not sure? WhatsApp us at +234 906 660 9177 and we'll help you work it out."
+  - CTA link at bottom: "← Back to Shop" pointing to `/shop`.
 
-- [x] **TASK C7:** Build Checkout page `src/app/checkout/page.tsx` with full logic. Client component. Sections: (1) Contact (email, WhatsApp), (2) Delivery (name, address, city, state dropdown with all 36 Nigerian states). On state change, call `POST /api/delivery/calculate` and show delivery options as radio buttons. On "Continue to Payment" click: validate all fields, call Paystack inline with `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY`, on Paystack success callback call `POST /api/orders` with full order data + `payment_reference`, on order created redirect to `/checkout/success?order=[orderNumber]`. Right sidebar: order summary from cart store. | Done: 2026-02-21 06:09
+### Batch 3 — Assigned 2026-02-22
 
-- [x] **TASK C8:** Build Order success page `src/app/(site)/checkout/success/page.tsx`. Read `?order=` query param. Display: "Order Confirmed", order number (IBY-XXXXXX format, large), "We'll send updates to your WhatsApp", link to `/track?order=[orderNumber]`, link to continue shopping `/shop`. Clear cart on mount. NOTE: pages are now inside `src/app/(site)/` route group — update the path accordingly. | Done: 2026-02-21 06:20
+- [x] **TASK G5:** Admin session cookie + Cloudinary folder + admin UI branding cleanup. Read each file before editing. | Done: 2026-02-22 10:05
+  **(1) Admin session cookie rename across ALL files** — rename `'iby_admin_session'` → `'315fabrics_admin_session'` in:
+  - `src/middleware.ts` — cookie check in the admin path guard
+  - `src/app/api/admin/auth/route.ts` — where cookie is SET on login
+  - `src/app/api/admin/logout/route.ts` — where cookie is DELETED
+  - `src/app/api/admin/collections/[id]/route.ts` — auth check
+  - `src/app/api/admin/orders/[id]/route.ts` — auth check + fix any `iby_closet` in email text + fix `https://iby-closet.com/track` URL → use `` `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/track` ``
+  - `src/app/api/admin/products/[id]/route.ts` — auth check
+  - `src/app/api/admin/stats/route.ts` — auth check
+  **(2) Cloudinary upload folder** — `src/app/api/upload/image/route.ts`: change folder from `'iby_closet/products'` → `'315fabrics/products'`. Also rename the cookie check from `iby_admin_session` to `315fabrics_admin_session`.
+  **(3) Admin sidebar** — `src/app/admin/_components/AdminSidebar.tsx`: update brand name/logo text from `iby_closet` → `315 Fabrics`. Keep layout unchanged.
+  **(4) Admin login page** — `src/app/admin/login/page.tsx`: update any visible `iby_closet` brand text to `315 Fabrics`.
+  **(5) Abandoned cart email** — `src/app/api/abandoned-cart/recover/route.ts`: fix hardcoded `https://iby-closet.com/cart` → use `` `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/cart` ``.
 
-- [x] **TASK C9:** Build Track Order page `src/app/(site)/track/page.tsx`. Client component. Input field for order number + submit button. On submit: call `GET /api/orders/[orderNumber]`. Display: order number, current status badge, items list, delivery address, status timeline (map `delivery_tracking` rows as a vertical timeline with icon + note + timestamp). Handle 404 with "Order not found" message. NOTE: file is at `src/app/(site)/track/page.tsx`. | Done: 2026-02-21 06:20
-
-- [x] **TASK C10:** Make Footer newsletter form functional. Update `src/components/Footer.tsx` — add `'use client'`, wire up the existing email input + Join button to call `POST /api/contacts` with `{ email, source: 'footer' }`. Show inline success/error message. Keep all existing styles. | Done: 2026-02-21 06:20
-
-*(C11 and C12 previously reassigned to Gemini as G11 and G12)*
-
-### New Batch — Assigned 2026-02-21
-
-- [x] **TASK C11:** Wire the Homepage (`src/app/(site)/page.tsx`) to real Supabase data. Convert it to a server component. (1) Fetch featured products: `select('id, name, slug, price').eq('is_featured', true).eq('status', 'active').limit(6)` from `products`, then for each product fetch its primary image from `product_images` where `is_primary = true`. Replace the 4-placeholder grid with real product cards linking to `/products/[slug]`. (2) Fetch featured collections: `select('id, name, slug, cover_image').eq('is_featured', true).in('status', ['active', 'upcoming']).limit(3)` from `collections`. Add a "Featured Collections" section below products — each card: cover_image (aspect-video, bg-neutral-100 if none), name (uppercase tracking-widest), link to `/collections/[slug]`. Keep the existing full-screen black hero section as-is. Price format: `₦${price.toLocaleString('en-NG')}`. | Done: 2026-02-21 07:37
-
-- [x] **TASK C12:** Build Collection detail page at `src/app/(site)/collections/[slug]/page.tsx`. Server component. (1) Fetch collection by slug: `select('*').eq('slug', slug).single()` — if not found, call `notFound()`. (2) Hero section: full-width cover image (use `<img>` with `object-cover`) or black hero with collection name if no cover. Show name, description, release_date formatted as "Release: MMM YYYY" if set. (3) Products section: fetch `select('id, name, slug, price').eq('collection_id', collection.id).eq('status', 'active')` from `products`, for each fetch primary image. Render 4-col grid (2-col mobile) same style as shop page — card with image (aspect-[4/5], bg-neutral-100 fallback), name, price, link to `/products/[slug]`. (4) If no products yet: show "Collection arriving soon." centred. Import `supabaseBrowser` from `@/lib/supabase` (NOT supabaseServer — this is a client-accessible page). Actually use `supabaseServer` from `@/lib/supabase` since this is a server component — it's fine in server components. Use `notFound` from `next/navigation`. | Done: 2026-02-21 07:37
-
-- [x] **TASK C13:** Fix `<img>` → Next.js `<Image />` warnings across all pages. Replace every bare `<img>` tag with `import Image from 'next/image'` and use `<Image>` instead. For images with unknown dimensions (Cloudinary URLs, Instagram URLs), add `fill` prop + wrap parent `<div>` in `className="relative"`. For images where you know the display size, use `width` + `height`. Files to update: `src/components/Header.tsx`, `src/components/Footer.tsx`, `src/app/(site)/shop/page.tsx`, `src/app/(site)/collections/page.tsx`, `src/app/(site)/products/[slug]/page.tsx`, `src/app/(site)/cart/page.tsx`. Be careful — parent containers must be `position: relative` when using `fill`. Add `sizes` prop for responsive images (e.g. `sizes="(max-width: 768px) 50vw, 25vw"` for a 4-col grid). Add `next.config.js` `images.remotePatterns` for Cloudinary and Instagram CDN domains if not already present. Check `next.config.js` before editing. | Done: 2026-02-21 07:37
-
-- [x] **TASK C14:** Wire the "Notify Me" CTA on the collections page (`src/app/(site)/collections/page.tsx`). Currently it renders a plain "Notify Me" link for upcoming collections. Change it to an inline expandable form: when clicked, show a small form below the card with email input + WhatsApp input (optional) + "Join Waitlist" button. On submit: POST to `/api/waitlist` with `{ email, whatsapp_number, collection_id: collection.id, source: 'waitlist' }`. Show "You're on the list!" on success. Since the collections page is currently a server component, you'll need a `'use client'` wrapper component for the notify section — create `src/app/(site)/collections/_components/NotifyMeButton.tsx` and import it in the page. The `/api/waitlist` route is being built by Gemini in G13 — it inserts into the `waitlist` table. | Done: 2026-02-21 07:37
-
-- [x] **TASK C15:** Update the product detail page to handle the "no variants" state gracefully. File: `src/app/(site)/products/[slug]/page.tsx` and `src/app/(site)/products/[slug]/ProductPurchasePanel.tsx`. Currently when there are no variants the Add-to-Cart button may be disabled. Change it: if there are NO variants at all, show a WhatsApp CTA instead — "Enquire on WhatsApp" button that opens `https://wa.me/2348XXXXXXXXX?text=Hi, I'm interested in [product name]` (use `NEXT_PUBLIC_WHATSAPP_NUMBER` env var, add to `.env.example`). If there ARE variants, keep the existing size selector + add-to-cart flow. Also add an "Out of Stock" message if a variant exists but `stock_quantity = 0`. Keep the existing ProductPurchasePanel component — just extend it with these two states. | Done: 2026-02-21 08:02
-
-### Batch 3 — Assigned 2026-02-21
-
-- [x] **TASK C16:** Build the Category filter page at `src/app/(site)/shop/[category-slug]/page.tsx`. Server component. (1) Fetch the category by slug: `select('id, name, slug').eq('slug', slug).single()` from `categories` — if not found, call `notFound()`. (2) Fetch products: `select('id, name, slug, price').eq('category_id', category.id).eq('status', 'active')` from `products`, for each fetch primary image from `product_images`. (3) Render same grid layout as the shop page (4-col desktop, 2-col mobile) with product cards linking to `/products/[slug]`. (4) Page header: show category name as h1. (5) Add a "Back to Shop" link. Use `supabaseServer`, `notFound` from `next/navigation`, `Image` from `next/image`. | Done: 2026-02-21 08:23
-
-- [x] **TASK C17:** Set up PostHog analytics. (1) Create `src/components/PostHogProvider.tsx` — a `'use client'` component that initializes PostHog using `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` from env. Use `posthog-js` and `posthog-js/react` — call `posthog.init()` with `{ api_host, capture_pageview: false }` (we'll capture manually). Wrap children in `PostHogProvider` from `posthog-js/react`. (2) Create `src/components/PostHogPageView.tsx` — a `'use client'` component that uses `usePathname` + `useSearchParams` from `next/navigation` and calls `posthog.capture('$pageview')` on route change via `useEffect`. (3) Add both to `src/app/(site)/layout.tsx` — wrap content in `PostHogProvider`, add `<PostHogPageView />`. (4) In `src/lib/cart-store.ts`, in the `addItem` action, add `if (typeof window !== 'undefined') { import('posthog-js').then(m => m.default.capture('add_to_cart', { product_id: item.product_id, product_name: item.product_name, price: item.unit_price })); }`. | Done: 2026-02-21 08:23
-
-### Batch 4 — Assigned 2026-02-21
-
-- [x] **TASK C18:** Add international order support to the checkout page at `src/app/(site)/checkout/page.tsx`. (1) Add a country selector dropdown ABOVE the state field. Default value: `"Nigeria"`. Options: `["Nigeria", "Ghana", "Kenya", "South Africa", "United Kingdom", "United States", "Canada", "Other"]`. When "Other" is selected, show a text input for custom country name. (2) When country is "Nigeria", show the existing state dropdown (36 Nigerian states). When country is NOT "Nigeria", hide the state dropdown and show a "State/Province" text input instead. (3) Update the delivery fetch call: pass `country` in the body to `POST /api/delivery/calculate`. (4) Update the order creation body: include country in `delivery_address` object (it's JSONB, so just add `country` to the existing object). (5) Keep all existing styles. Nigeria should remain the default experience — international is additive. | Done: 2026-02-21 08:51
-
-- [x] **TASK C19:** Write frontend component tests using Vitest + React Testing Library. (1) Run `npm install -D @testing-library/react @testing-library/jest-dom jsdom` (vitest will already be installed by G19). (2) Create `__tests__/components/cart-store.test.ts` — test Zustand cart store: `addItem` adds items, `addItem` with same variant increments qty, `removeItem` removes, `updateQuantity` updates, `clearCart` empties, `subtotal` and `totalItems` compute correctly. (3) Create `__tests__/components/PaystackButton.test.tsx` — test PaystackButton renders with correct amount format, test disabled state, test that it renders with loading text when amount is 0. (4) Update `vitest.config.ts` (created by G19) to add `environment: 'jsdom'` for component test files — use `environmentMatchGlobs` pattern: `['__tests__/components/**', 'jsdom']`. (5) Run tests and ensure they pass. | Done: 2026-02-21 08:51
-
-### Batch 5 — Assigned 2026-02-21
-
-- [x] **TASK C20:** Improve the Cart page UX at `src/app/(site)/cart/page.tsx`. (1) Add product images next to each cart item — the `image_url` is already in the cart store, render it using `<Image>` from `next/image` (40x50px thumbnail, rounded, bg-neutral-100 fallback). (2) Each item should show: image, product name (link to `/products/[slug]` — NOTE: we don't store slug in cart items, so just show name without link), size, color if not "Default", unit price, quantity controls (+/-), line total (qty × price), and remove button. (3) Add a "Continue Shopping" link below the items that goes to `/shop`. (4) On the order summary sidebar, add estimated delivery note: "Delivery calculated at checkout". (5) Mobile layout: stack items vertically, summary section below items. (6) Keep existing empty cart state. Preserve all current styles but make the layout more polished. | Done: 2026-02-21 09:26
-
-- [x] **TASK C21:** Add smooth page transitions and loading states across the site. (1) Create `src/components/PageTransition.tsx` — a `'use client'` component that wraps children and adds a fade-in animation on mount. Use CSS `@keyframes fadeIn` with `opacity: 0 → 1` over 300ms. Apply via a wrapper `<div>` with inline animation or a Tailwind `animate-` class. (2) Add to `src/app/(site)/layout.tsx` — wrap `{children}` in `<PageTransition>`. (3) Create `src/app/(site)/loading.tsx` — Next.js loading UI file. Show a minimal centered spinner or pulsing "iby_closet" text (uppercase tracking-widest, animate-pulse). Black text on white background. (4) Create `src/app/admin/loading.tsx` — similar loading UI but simpler. (5) Ensure the loading states feel consistent with the brand aesthetic (minimal, editorial). | Done: 2026-02-21 09:26
+- [x] **TASK G6:** FAQ page rewrite + track page fix. Read each file before editing. | Done: 2026-02-22 10:06
+  **(1) Rewrite `src/app/(site)/faq/page.tsx`** — keep the same accordion/section layout but replace ALL content with fabric store Q&As:
+  - Update metadata: `title: 'FAQ'`, description referencing 315 Fabrics fabric store
+  - Replace ALL `@iby_closet` → `@3_15fabrics`, all `2349131410602` → `2349066609177`, all `IBY-XXXXXXXX` → `315-YYYY-XXXXXX`
+  - Rewrite Q&A categories and questions for a fabric store context. Suggested sections and Q&As:
+    **Ordering & Yards:** "How do I know how many yards I need?" (link to yardage guide), "What is the minimum order?" (depends on product — check listing), "Can I order a custom amount of yards?" (yes for yard-type products), "What does 'bundle' mean?" (fixed set of yards, one price)
+    **Fabric Types:** "What types of fabric do you sell?" (Ankara, French Lace, Swiss Voile, Aso-Oke, Senator, Cotton), "Do you do asoebi group orders?" (yes — WhatsApp for bulk pricing)
+    **Payment:** "How do I pay?" (online via card/bank transfer through Paystack, or WhatsApp order), "Is payment secure?" (yes — Paystack)
+    **Delivery:** "Do you deliver nationwide?" (yes, across Nigeria), "How long does delivery take?" (2–5 working days Lagos, 3–7 outside Lagos), "How much is delivery?" (calculated at checkout based on location)
+    **Returns & Quality:** "What if my fabric is faulty?" (contact within 48 hours, WhatsApp), "Are your fabrics authentic?" (yes — sourced directly from trusted suppliers)
+  **(2) Fix `src/app/(site)/track/page.tsx`** — find any reference to `IBY-2026-XXXXXX` format example and change to `315-2026-XXXXXX`. Only change the display text/example, not any functional logic.
 
 ---
 
-## CLAUDE — Audits + Admin Panel
+## CODEX — Batch 3 — Assigned 2026-02-22
 
-- [x] Audit project setup, identify issues | Done: 2026-02-21
-- [x] Create CLAUDE.md with full project brief | Done: 2026-02-21
-- [x] Set up multi-agent coordination system (task.md, CODEX.md, GEMINI.md format) | Done: 2026-02-21
-- [x] Assign Batch 1 tasks to Gemini (G1–G8) and Codex (C1–C10) | Done: 2026-02-21
-- [x] Audit + fix Gemini G1–G8 (3 bugs fixed: any types, updated_at col, substring index) | Done: 2026-02-21
-- [x] Audit Codex C1–C5 (all pass) | Done: 2026-02-21
-- [x] Restructure pages into (site) route group — admin now has clean separate layout | Done: 2026-02-21
-- [x] Build Admin: login page, layout + auth guard, sidebar (desktop + mobile bottom nav) | Done: 2026-02-21
-- [x] Build Admin: orders dashboard (filter by source + status), order detail (update status + tracking timeline) | Done: 2026-02-21
-- [x] Build Admin: products list, product create form, product edit page | Done: 2026-02-21
-- [x] Assign Batch 2: C11-C14 to Codex, G13-G15 to Gemini | Done: 2026-02-21
-- [x] Audit all Batch 2 + Batch 1 remaining — fixed 6 bugs, rebuilt checkout page | Done: 2026-02-21
-- [x] Assign Batch 3: C16-C17 to Codex, G16-G17 to Gemini | Done: 2026-02-21
-- [x] Audit Batch 3 — fixed 5 bugs: cache.ts double JSON serialization, orders route missing payment_reference, duplicate emails, webhook empty secret bypass, PostHogPageView Suspense boundary. Also fixed Redis client crashing with placeholder URLs. | Done: 2026-02-21
-- [x] Set up Paystack test keys in .env.local | Done: 2026-02-21
-- [x] Assign Batch 4: G18-G19 to Gemini, C18-C19 to Codex | Done: 2026-02-21
-- [x] Audit Batch 4 — all tasks verified done. Fixed vitest.config.ts (excluded from tsconfig due to incompatible type). Built 5 missing pages: /brand, /lookbook, /size-guide, /faq, /contact. Fixed ProductPurchasePanel: added quantity selector + "Added ✓" feedback + "In Cart" state display. Created ₦1,000 test product (test-checkout-tee) for checkout testing. | Done: 2026-02-21
-- [x] Assign Batch 5: G20-G21 to Gemini, C20-C21 to Codex | Done: 2026-02-21
+- [x] **TASK C6:** Cart page — show yard count and unit label per item. Read `src/app/(site)/cart/page.tsx` first. | Done: 2026-02-22 10:06
+  The cart items already have `unit_type` and `quantity` (= yards for yard-type). Update the cart item display:
+  - For each item where `item.unit_type === 'yard'`: show `"{item.quantity} yards"` next to (or instead of) the plain quantity number. Line total should show `{item.quantity} yds × ₦{price} = ₦{total}`.
+  - For `unit_type === 'bundle'`: show `"Bundle (1 set)"` instead of quantity.
+  - The subtotal calculation doesn't change — `item.unit_price × item.quantity` is already correct.
+  - Match existing cart item styling — don't change layout, just update text labels for the quantity/unit display.
 
-### Batch 6 — Assigned 2026-02-21
+- [x] **TASK C7:** Delete size-guide page + fix track page format example. Read files before editing. | Done: 2026-02-22 10:06
+  **(1) Delete `src/app/(site)/size-guide/page.tsx`** — this page is superseded by `/yardage-guide`. Simply delete the file. (The `/size-guide` URL will 404, which is acceptable — no redirect needed yet.)
+  **(2) Check `src/app/(site)/track/page.tsx`** — find the order number format example text (something like "e.g. IBY-2026-XXXXXX" or similar). Update it to show `315-2026-XXXXXX` format. Only change the example text — do not touch any form logic, API calls, or state.
 
-- [x] **TASK G22:** Admin order search/filter — Add search bar and filter dropdowns to `/admin/orders/page.tsx`. Filters: order number, customer name, status, source. Update list in real time as user types/selects. | Done: 2026-02-21 09:37
+### Batch 4 — Assigned 2026-02-22
 
-- [x] **TASK G23:** API route for abandoned cart recovery — Create `/api/abandoned-cart/recover` (POST). Body: `{ email?, whatsapp_number? }`. If email, send recovery link via Resend. If WhatsApp, send via Fonnte. Log recovery attempt in `abandoned_carts` table. | Done: 2026-02-21 09:37
+- [ ] **TASK G7:** Update order confirmation email item display for fabric yards.
+  **File:** `src/lib/email.ts` — read first. Find the order items loop inside the HTML email template (look for `item.name`, `item.size`). Update each item row:
+  - Change `Size: ${item.size || 'N/A'}` → `"${item.yards_ordered ?? item.quantity} yards — ${item.color || 'Standard'}"` (shows yards and colorway)
+  - Also update the subject line for order confirmation from plain "Your order [number] is confirmed" to "Your 315 Fabrics order [number] is confirmed — we'll be in touch shortly"
+  - Update the WhatsApp notification text (Fonnte call — likely in the same file or in the orders API): where it lists order items, replace "Size: ..." with "${yards} yards — ${color}". Find all places that mention item details in the notification.
 
-### Ad-hoc Fixes
-- [x] **Ad-hoc Debug:** Fix `test-checkout-tee` not adding to cart. Resolved critical Next.js React Hydration Mismatch crashes across `Header`, `ProductPurchasePanel`, and `CartPage` caused by SSR conflict with local-storage persisted Zustand store. Wrapped immediate dependent reads with `useEffect` mounted states. | Done: 2026-02-21 10:11
+- [ ] **TASK G8:** Repurpose `src/app/(site)/collections/page.tsx` as "Shop by Fabric Type" page.
+  Read the file first. Replace the ENTIRE component — it currently shows editorial campaign collections (iby_closet concept). The new version queries the `categories` table and shows a clean card grid.
+  **New component:**
+  ```tsx
+  // Remove imports for: NotifyMeButton, StaggerContainer, StaggerItem, Collection type
+  // Add: Category type (Pick<Category, 'id' | 'name' | 'slug'>)
 
-- [x] **TASK C22:** Admin product bulk upload CSV — Add CSV upload to `/admin/products/page.tsx`. Parse CSV, insert products, variants, images. Show preview before confirming upload. Handle errors gracefully. | Done: 2026-02-21 10:13
+  // Query:
+  const { data: categories } = await supabaseServer
+    .from('categories')
+    .select('id, name, slug')
+    .order('sort_order', { ascending: true });
+  ```
+  **New UI:** Page title "Shop by Fabric Type". White background, black text. 2-column grid (md: 3-column). Each card: link to `/shop/${category.slug}`, shows category name in large uppercase text with an arrow →. Simple border card — no images needed (we have no category photos yet).
+  Example card: `border border-neutral-200 p-8 hover:border-black transition-colors group` with `text-lg uppercase tracking-widest` for name and a subtle `→` that slides on hover.
+  Export `export const dynamic = 'force-dynamic'` AFTER imports.
 
-- [x] **Ad-hoc:** Order status notifications — Added `sendOrderStatusUpdate()` to `src/lib/email.ts`. Built `PATCH /api/admin/orders/[id]` route that updates DB status, inserts tracking row, and sends Resend email + Fonnte WhatsApp to customer. Updated admin order detail page to call API route instead of raw Supabase (shows "Saved · Customer notified" on success). Fixed `supabase.ts` GoTrueClient duplicate instance warning with globalThis singleton pattern. | Done: 2026-02-21
+- [ ] **TASK G9:** Update homepage `src/app/(site)/page.tsx` "Shop by Category" section to show fabric categories from DB (not collections).
+  Read the file first. The homepage currently fetches `collections` table for the "Shop by Category" section. Replace this:
+  - Change the `featuredCollections` query to instead query the `categories` table: `supabaseServer.from('categories').select('id, name, slug').order('sort_order', { ascending: true }).limit(6)`
+  - Rename the returned key from `collections` to `categories`
+  - Update the "Shop by Category" grid: render category cards with `href="/shop/${category.slug}"` (not `/collections/[slug]`). Since categories have no cover_image, use a text-only card design (black bg, white category name, centered, `aspect-square` or `aspect-video` with no image — just dark card). Same hover scale as before.
+  - Change the "All Categories" `<Link href="/collections">` to `<Link href="/shop">` (the shop page has category filter built in via ShopFilter)
+  - Update the type annotation (rename `FeaturedCollection` to `FabricCategory` = `Pick<Category, 'id' | 'name' | 'slug'>`)
+  - Remove the `Collection` import from types.
 
-- [x] **TASK C23:** Frontend abandoned cart recovery modal — On cart page, detect if user has abandoned cart (e.g. left items for >30min). Show modal offering to send recovery link via email/WhatsApp. Call `/api/abandoned-cart/recover`. | Done: 2026-02-21 10:13
+- [ ] **TASK G10:** Create `scripts/seed_test_products.js` — insert 2 test products for checkout testing. Follow the same dotenv + supabase pattern as other scripts.
+  **Product 1 — yard-type:**
+  ```js
+  { name: 'Rich Ankara Print — Test', slug: 'test-ankara-print', description: 'A vibrant test Ankara product for checkout testing.', price: 5000, status: 'active', unit_type: 'yard', minimum_quantity: 5, fabric_type: 'Ankara', gender: 'unisex', is_featured: true }
+  ```
+  Then insert 2 variants: `{ product_id, color: 'Wine Red', size: null, stock_quantity: 20 }` and `{ product_id, color: 'Navy Blue', size: null, stock_quantity: 15 }`.
+  Then insert 1 product_image: `{ product_id, image_url: 'https://placehold.co/600x800/222/fff?text=Ankara+Test', is_primary: true, sort_order: 0 }`.
+  **Product 2 — bundle-type:**
+  ```js
+  { name: 'Senator Bundle — Test', slug: 'test-senator-bundle', description: 'A test Senator bundle product.', price: 35000, status: 'active', unit_type: 'bundle', minimum_quantity: 8, fabric_type: 'Senator', gender: 'men', is_featured: false }
+  ```
+  Then 2 variants: `{ color: 'Charcoal Grey', size: null, stock_quantity: 10 }` and `{ color: 'Champagne', size: null, stock_quantity: 8 }`.
+  Then 1 image: `{ image_url: 'https://placehold.co/600x800/333/ccc?text=Senator+Bundle', is_primary: true, sort_order: 0 }`.
+  Use upsert on `slug` to avoid duplicates. Log results. **Do NOT run** — just create the script.
 
-### Batch 8 — Assigned 2026-02-21
+- [ ] **TASK G11:** Add `sort` param to `src/app/(site)/shop/page.tsx` server component.
+  Read the file first. Currently `searchParams` only has `gender`. Add `sort` to the destructuring:
+  ```ts
+  const sortParam = Array.isArray(searchParams?.sort) ? searchParams?.sort[0] : searchParams?.sort;
+  const sort = ['newest', 'price-asc', 'price-desc'].includes(sortParam ?? '') ? sortParam : 'newest';
+  ```
+  Update the Supabase query to apply sort:
+  - `newest` → `.order('created_at', { ascending: false })` (already the default)
+  - `price-asc` → `.order('price', { ascending: true })`
+  - `price-desc` → `.order('price', { ascending: false })`
+  Update the cachedFetch key to `shop:products:${gender ?? 'all'}:${sort}` so different sorts get separate cache entries.
+  Pass `sort` as a new prop to `<ShopFilter sort={sort ?? 'newest'} />` — ShopFilter may not use it yet (C9 adds the UI), but wire up the prop so data is correct.
 
-- [x] **TASK C27:** Add image upload to admin product forms. **(1)** Create `src/components/ImageUploader.tsx` — a `'use client'` reusable component. Props: `{ onUpload: (url: string) => void, label?: string }`. Renders: a `<label>` acting as a drop zone (dashed border, hover effect). Contains a hidden `<input type="file" accept="image/jpeg,image/png,image/webp">`. On file select: show filename + preview thumbnail (use `URL.createObjectURL`), then POST to `/api/upload/image` using FormData. Show upload progress (simple "Uploading..." text). On success: call `onUpload(url)` with the returned `secure_url`. On error: show inline error message. **(2)** Update `src/app/admin/products/page.tsx` — in the product create form, replace the plain `image_url` text inputs for images with the `<ImageUploader>` component. Keep the form's state management — `onUpload` sets the corresponding image URL in state. The rest of the form logic (variants, status, etc.) remains unchanged. Keep the existing CSV upload functionality untouched. **(3)** The edit product form (if it exists as a separate page/modal) — apply the same `<ImageUploader>` swap. | Done: 2026-02-21 11:28
+- [ ] **TASK G12:** Review admin manual order form `src/app/admin/orders/new/page.tsx`. Read the file first.
+  **(1)** Search for any remaining `iby_closet`, `IBY-`, or old WhatsApp numbers — fix them.
+  **(2)** The order item row should have a "Yards Ordered" field. Find where order items (product lines) are entered in the form. If there's a `quantity` field per item, add a `yardsOrdered` input next to it (or replace it with clearer labeling: "Qty / Yards" with a note). When submitting, include `yards_ordered: item.yardsOrdered ?? item.quantity` in the payload sent to `POST /api/orders`.
 
-- [x] **TASK C31:** Lookbook page — full overhaul with all 40 real local images as a static gallery. **File:** `src/app/(site)/lookbook/page.tsx`. Full rewrite — remove the `getLookbookImages()` Supabase call entirely (delete the function call and related logic). Define two static arrays at the TOP of the file (outside the component, before `export default`). **Array 1 — EDITORIAL** (15 items): `const EDITORIAL = [{ src: '/images/instagram/post_0.jpg', label: 'Campaign' }, { src: '/images/instagram/post_1.jpg', label: 'Editorial' }, { src: '/images/instagram/post_4.jpg', label: 'Lifestyle' }, { src: '/images/instagram/post_5.jpg', label: 'Campaign' }, { src: '/images/instagram/post_7.jpg', label: 'Editorial' }, { src: '/images/instagram/post_8.jpg', label: 'Lifestyle' }, { src: '/images/instagram/post_10.jpg', label: 'Campaign' }, { src: '/images/instagram/post_12.jpg', label: 'Editorial' }, { src: '/images/instagram/post_14.jpg', label: 'Lifestyle' }, { src: '/images/instagram/post_16.jpg', label: 'Campaign' }, { src: '/images/instagram/post_18.jpg', label: 'Editorial' }, { src: '/images/instagram/post_19.jpg', label: 'Lifestyle' }, { src: '/images/instagram/post_20.jpg', label: 'Campaign' }, { src: '/images/instagram/post_22.jpg', label: 'Editorial' }, { src: '/images/instagram/post_24.jpg', label: 'Lifestyle' }]`. **Array 2 — PRODUCTS** (23 items, ONLY these exact filenames — do NOT reference product_108 through product_113, product_115, product_116, product_118, product_120, product_131 as those files do not exist): `const PRODUCTS = ['/images/instagram/product_100.jpg', '/images/instagram/product_101.jpg', '/images/instagram/product_102.jpg', '/images/instagram/product_103.jpg', '/images/instagram/product_104.jpg', '/images/instagram/product_105.jpg', '/images/instagram/product_106.jpg', '/images/instagram/product_107.jpg', '/images/instagram/product_114.jpg', '/images/instagram/product_117.jpg', '/images/instagram/product_119.jpg', '/images/instagram/product_121.jpg', '/images/instagram/product_122.jpg', '/images/instagram/product_123.jpg', '/images/instagram/product_124.jpg', '/images/instagram/product_125.jpg', '/images/instagram/product_126.jpg', '/images/instagram/product_127.jpg', '/images/instagram/product_128.jpg', '/images/instagram/product_129.jpg', '/images/instagram/product_130.jpg', '/images/instagram/product_132.jpg', '/images/instagram/product_133.jpg']`. **Page structure (server component — no `'use client'`, keep existing `metadata` export):** (1) Hero: `<section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden bg-black">` with `<Image src="/images/instagram/post_19.jpg" fill priority sizes="100vw" className="object-cover opacity-40" />` and a centered z-10 text block: `<h1 className="text-5xl font-light uppercase tracking-[0.3em] text-white md:text-7xl">Lookbook</h1>` + `<p className="mt-4 text-xs uppercase tracking-[0.3em] text-neutral-400">Campaign imagery &amp; editorial moments</p>`. (2) Section label for editorial: `<div className="px-6 py-10 md:px-12"><h2 className="border-b border-neutral-800 pb-4 text-xs uppercase tracking-[0.4em] text-neutral-500">Campaign &amp; Editorial</h2></div>`. (3) Editorial masonry: `<section className="px-4 pb-8 md:px-8"><div className="columns-1 gap-3 sm:columns-2 lg:columns-3">{EDITORIAL.map((img, i) => <div key={i} className="group relative mb-3 break-inside-avoid overflow-hidden"><Image src={img.src} alt={img.label} width={600} height={800} className="w-full object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" /><div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"><span className="p-4 text-xs uppercase tracking-widest text-white">{img.label}</span></div></div>)}</div></section>`. NOTE: use `width={600} height={800}` NOT `fill` — CSS columns masonry does NOT work with `fill`. (4) Section label for products: same pattern with text "Product Photography". (5) Product masonry: `columns-2 sm:columns-3 lg:columns-4` using `width={400} height={500}` for each PRODUCTS image. (6) Instagram CTA: `<section className="border-t border-neutral-800 py-16 text-center">` with `<a href="https://instagram.com/iby_closet" target="_blank" rel="noreferrer" className="inline-block border border-white px-8 py-3 text-sm uppercase tracking-widest text-white hover:bg-white hover:text-black transition-colors">@iby_closet</a>`. Entire page background: `bg-black text-white`. | Done: 2026-02-22 04:10
+- [ ] **TASK G13:** Review admin quick-sale page `src/app/admin/quick-sale/page.tsx`. Read the file first.
+  **(1)** Search for any remaining `iby_closet`, `IBY-` references — fix them.
+  **(2)** When it builds the order payload and calls `POST /api/orders`, ensure each item includes `yards_ordered: item.quantity` (since for a quick-sale, quantity entered = yards). This is a one-line addition to the item object.
 
-- [x] **TASK C28:** Add product search and filter bar to the Shop page. **(1)** The shop page at `src/app/(site)/shop/page.tsx` is currently a server component. To add client-side filtering, create a new client component `src/app/(site)/shop/_components/ShopFilter.tsx`. Props: `{ products: { id, name, slug, price, imageUrl, categoryId }[], categories: { id, name, slug }[] }`. State: `search: string`, `selectedCategory: string | null`. Filters `products` by: (a) name contains search string (case-insensitive), and (b) if `selectedCategory` is set, `categoryId === selectedCategory`. Renders: (top bar) a text search input (placeholder "Search products…", border-neutral-200 style consistent with site), category pills/buttons (All + one per category — filled black when selected, bordered when not). Below: the product grid using `<ProductCard>` (already built). Empty state: "No products found." centred. **(2)** In `src/app/(site)/shop/page.tsx` — fetch categories from Supabase alongside products. Pass both to `<ShopFilter>`. Make the page still a server component — only the filter section is a client component. **(3)** Keep all existing cache wrapping (`cachedFetch`) for the products fetch. | Done: 2026-02-21 11:28
+- [ ] **TASK G14:** Update admin products list page `src/app/admin/products/page.tsx`. Read the file first.
+  Add `fabric_type` and `unit_type` columns to the product table so Ayodei can see fabric details at a glance:
+  - In the Supabase select query, add `fabric_type, unit_type` to the selected fields
+  - In the table header row, add columns: "Fabric Type" and "Sold By"
+  - In each table row, show: `fabric_type ?? '—'` and `unit_type === 'bundle' ? 'Bundle' : 'Per Yard'`
+  - Keep all existing columns and logic unchanged — just add these 2 new columns
 
-- [x] **TASK C32:** Brand page — add real founder photo. **File:** `src/app/(site)/brand/page.tsx`. **(1)** Read the file first. **(2)** Add `import Image from 'next/image'` at the top — this import is currently missing. **(3)** Find the `<div>` block that serves as the founder image placeholder — it was added by G30 and looks like `<div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-neutral-900 to-neutral-700 ...">` containing centred text "IBRAHIM HAMED / IBY_CLOSET". Replace the ENTIRE div (including all its children) with: `<div className="relative aspect-[4/5] overflow-hidden"><Image src="/images/instagram/product_100.jpg" alt="Ibrahim Hamed — founder of iby_closet" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover object-top" /></div>`. **(4)** No other changes to this file — keep all surrounding layout, text, and links exactly as they are. | Done: 2026-02-22 04:10
+---
 
-### Batch 7 — Assigned 2026-02-21
+## CODEX — Batch 4 — Assigned 2026-02-22
 
-- [x] **TASK G24:** Add SEO metadata to product and collection detail pages. **(1)** In `src/app/(site)/products/[slug]/page.tsx` — export an async `generateMetadata({ params })` function. Fetch the product by slug. Return: `title: "${product.name} — iby_closet"`, `description`: first 160 chars of `product.description ?? 'Shop ${product.name} at iby_closet'`, `openGraph: { title, description, images: [primaryImageUrl] }`. **(2)** In `src/app/(site)/collections/[slug]/page.tsx` — same pattern. Return: `title: "${collection.name} — iby_closet Collections"`, `description`: first 160 chars of `collection.description ?? 'Explore the ${collection.name} collection at iby_closet'`, `openGraph: { title, description, images: [collection.cover_image] }`. **(3)** In `src/app/(site)/layout.tsx` — add a default `metadata` export: `{ title: { default: 'iby_closet', template: '%s — iby_closet' }, description: 'Lagos men\'s fashion. Designed by Ibrahim Hamed.', openGraph: { siteName: 'iby_closet', locale: 'en_NG' } }`. TypeScript: use `Metadata` type from `next`. Cache the product/collection fetches inside `generateMetadata` with the same `cachedFetch` helper used by the page. Avoid double-fetching — both `generateMetadata` and the page component will use the Redis cache. | Done: 2026-02-21 10:45
+- [ ] **TASK C8:** Checkout success page — fabric-specific copy. Read `src/app/(site)/checkout/success/page.tsx` first.
+  Update copy to be fabric-focused:
+  - Main heading: "Order Confirmed" (keep as-is if already correct — just remove any "🎉" emoji or "styled" language that sounds like fashion not fabric)
+  - If there's a message like "Your order has been placed": update to "Your fabric order has been confirmed."
+  - If there's a sub-message about delivery: update to "We'll send you a WhatsApp message to confirm delivery timing."
+  - If there are any `IBY-` format references in the display (other than the order number itself which comes from DB): change to `315-`
+  - Do NOT change the order number display logic itself (it reads from params/DB)
 
-- [x] **TASK G25:** Decrement stock on order creation. In `src/app/api/orders/route.ts`, after successfully inserting all `order_items`, loop through the `items` array and for each item that has a `variant_id`: run `UPDATE product_variants SET stock_quantity = GREATEST(stock_quantity - {quantity}, 0) WHERE id = '{variant_id}'` via Supabase RPC or direct update. Use `supabaseServer.from('product_variants').update({ stock_quantity: supabase.rpc(...) })` — actually use the simpler pattern: fetch current variant stock, subtract quantity (floor at 0), update. Wrap in try/catch — if decrement fails, log it but do NOT fail the order (order is already created, don't roll back). This prevents overselling while keeping orders resilient. Only decrement if `variant_id` is non-null. | Done: 2026-02-21 10:45
+- [ ] **TASK C9:** Sort UI on shop page. Read `src/app/(site)/shop/page.tsx` first.
+  After G11 adds the server-side `sort` param, add UI for it:
+  Add sort pills **below** the gender pills, labeled "Sort by:". Same pill style (border, uppercase, tracking-widest, black active state):
+  ```tsx
+  const sortOptions = [
+    { value: 'newest', label: 'Newest' },
+    { value: 'price-asc', label: 'Price ↑' },
+    { value: 'price-desc', label: 'Price ↓' },
+  ];
+  ```
+  Each pill links to the current page with `?sort=[value]` — preserve the existing `gender` param if present (e.g. `?gender=women&sort=price-asc`).
+  The active sort comes from the `sort` prop that G11 passes down (or read from `searchParams` directly).
+  Keep the sort pills in the server component (no client state needed — they're just links).
 
-- [x] **TASK G26:** Build `GET /api/admin/stats` route at `src/app/api/admin/stats/route.ts`. Auth: check `iby_admin_session` cookie (same pattern as middleware). Return JSON: `{ totalRevenue, totalOrders, totalProducts, todayOrders, totalContacts }`. Logic: (1) `totalRevenue`: `SELECT SUM(total_amount) FROM orders WHERE payment_status = 'paid'` — use `.select('total_amount').eq('payment_status', 'paid')` and sum in JS. (2) `totalOrders`: count of all orders. (3) `totalProducts`: count of products where `status = 'active'`. (4) `todayOrders`: count of orders where `created_at >= today midnight UTC`. (5) `totalContacts`: count of contacts table. Return `{ totalRevenue: number, totalOrders: number, totalProducts: number, todayOrders: number, totalContacts: number }`. Handle errors with 500. Use `supabaseServer`. | Done: 2026-02-21 10:45
+---
 
-- [x] **TASK C24:** Add `slug` to cart items so product links work from the cart page. **(1)** In `src/lib/cart-store.ts` — add `slug: string` to the `CartItem` type (after `product_id`). **(2)** In `src/app/(site)/products/[slug]/ProductPurchasePanel.tsx` — the `addItem` call needs to include `slug`. The panel already receives the product — pass `product.slug` in the `addItem` payload. **(3)** In `src/app/(site)/cart/page.tsx` — change the product name display from plain text to a `<Link href={/products/${item.slug}}>` if `item.slug` exists (guard with `item.slug ? <Link> : <span>`). This fixes the UX gap where users can't navigate back to a product from the cart. **(4)** Keep all other cart logic unchanged — `removeItem`, `updateQuantity`, `clearCart`, `subtotal` are all fine. Note: existing cart items in localStorage won't have `slug` — the guard in step 3 handles this gracefully. | Done: 2026-02-21 10:52
+## CLAUDE — Audits + Architecture
 
-- [x] **TASK C25:** Build the Admin Dashboard homepage at `src/app/admin/page.tsx`. Client component. **(1)** On mount, fetch `GET /api/admin/stats` (G26 builds this — if not available yet, show placeholder zeros). **(2)** Show 4 stat cards in a 2×2 grid (1-col on mobile): "Total Revenue" (₦XX,XXX formatted), "Total Orders", "Active Products", "New Today". Use border cards, uppercase tracking-widest labels, large numbers — consistent with admin aesthetic. **(3)** Show a "Recent Orders" section below — fetch the last 5 orders from Supabase directly (`order('created_at', { ascending: false }).limit(5)`) — show order_number, customer_name, status badge, total_amount, created_at formatted as `DD MMM HH:mm`. **(4)** Quick action buttons: "New Manual Order" → `/admin/orders/new`, "Quick Sale" → `/admin/quick-sale`. **(5)** Handle loading state with a pulsing skeleton or "Loading..." text. The admin layout and sidebar already exist — just build the page content. | Done: 2026-02-21 10:52
+- [x] Fork from iby_closet, audit full codebase | Done: 2026-02-22
+- [x] Create CLAUDE.md, GEMINI.md, CODEX.md, task.md for 315 Fabrics | Done: 2026-02-22
+- [x] Assign Batch 1: G1-G3 to Gemini, C1-C3 to Codex | Done: 2026-02-22
 
-- [x] **TASK C26:** Create `src/app/sitemap.ts` — Next.js App Router sitemap generation. Export a default async function that returns a `MetadataRoute.Sitemap` array. **(1)** Static routes: `/`, `/shop`, `/collections`, `/brand`, `/lookbook`, `/size-guide`, `/faq`, `/contact`, `/track` — set `changeFrequency: 'weekly'`, `priority: 0.8` (homepage gets `1.0`, track gets `0.3`). **(2)** Dynamic product routes: fetch all products where `status = 'active'`, map each to `/products/${slug}` with `changeFrequency: 'daily'`, `priority: 0.9`, `lastModified: product.updated_at`. **(3)** Dynamic collection routes: fetch all collections where `status in ('active', 'upcoming')`, map each to `/collections/${slug}` with `changeFrequency: 'weekly'`, `priority: 0.8`. **(4)** Use `supabaseServer` for the fetches. The base URL should be `https://iby-closet.com` (hardcoded — it's a constant). Return type: `MetadataRoute.Sitemap` from `next`. This file goes at `src/app/sitemap.ts` — Next.js auto-serves it at `/sitemap.xml`. | Done: 2026-02-21 10:52
-
-### Batch 8 — Assigned 2026-02-21
-
-- [x] **TASK G27:** Build Cloudinary image upload API + robots.txt. **(1)** Create `POST /api/upload/image` at `src/app/api/upload/image/route.ts`. Auth: check `iby_admin_session` cookie (same pattern as `/api/admin/stats`). Accept `multipart/form-data` with a single `file` field. Use the Cloudinary Node SDK: `import { v2 as cloudinary } from 'cloudinary'`. Configure with `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` env vars. Upload the file as a Buffer using `cloudinary.uploader.upload_stream()` (wrap in a Promise). Upload to folder `iby_closet/products`. Return `{ url: secure_url, public_id }`. Limit file size: reject if over 5MB with 413. Only accept image MIME types (image/jpeg, image/png, image/webp) — reject others with 400. **(2)** Create `src/app/robots.ts` — Next.js robots.txt generation. Export default function returning `{ rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/admin/*', '/api'] }], sitemap: 'https://iby-closet.com/sitemap.xml' }`. This auto-serves at `/robots.txt`. **(3)** Add `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` to `.env.example` if not already present (they should be — just confirm). Install cloudinary if not installed: `npm install cloudinary`. | Done: 2026-02-21 11:15
-
-- [x] **TASK G28:** Add cache invalidation when admin edits products or collections. **(1)** In `src/app/api/admin/orders/[id]/route.ts` (PATCH route) — no cache needed (orders aren't cached). Skip. **(2)** Create a new internal utility `src/lib/invalidate-cache.ts` — export two functions: `invalidateProductCache(slug: string)` and `invalidateCollectionCache(slug: string)`. Each function does: (a) delete the relevant Redis key: `redis.del('shop:products')` for products, `redis.del('home:featured')` for both, `redis.del(`product:${slug}`)` if that key is used. (b) call `revalidatePath` from `next/cache` for the affected page paths. `invalidateProductCache`: call `revalidatePath('/shop')`, `revalidatePath('/products/${slug}')`, `revalidatePath('/')`. `invalidateCollectionCache`: call `revalidatePath('/collections')`, `revalidatePath('/collections/${slug}')`, `revalidatePath('/')`. **(3)** Create `PATCH /api/admin/products/[id]` at `src/app/api/admin/products/[id]/route.ts`. Auth: check `iby_admin_session` cookie. Body: any subset of product fields. Update the product in Supabase. Then call `invalidateProductCache(slug)`. Return `{ success: true }`. Also handle `DELETE` verb: delete product by id, call `invalidateProductCache(slug)`, return `{ success: true }`. **(4)** Create `PATCH /api/admin/collections/[id]` at `src/app/api/admin/collections/[id]/route.ts`. Same pattern — update collection, call `invalidateCollectionCache(slug)`, return `{ success: true }`. Also handle DELETE. Wrap all in try/catch, return 500 on error. | Done: 2026-02-21 11:15
-
-### Batch 9 — Assigned 2026-02-21
-*(Gemini carries ~70% of load — Codex is finishing C27 + C28 in parallel)*
-
-- [x] **TASK G29:** Install Framer Motion and add smooth animations to key site sections. **(1)** Run `npm install framer-motion`. **(2)** Create `src/components/FadeIn.tsx` — a `'use client'` wrapper component that uses `motion.div` from framer-motion. Props: `{ children, delay?: number, className?: string }`. Animates from `opacity: 0, y: 20` to `opacity: 1, y: 0` with `duration: 0.5` and optional `delay`. Use `viewport: { once: true }` so animation only fires once as element enters view. **(3)** Create `src/components/StaggerChildren.tsx` — wraps a list and staggers children animations. Uses `motion.div` with `variants` for container (staggerChildren: 0.08) and item (opacity 0→1, y 20→0). Export both `StaggerContainer` and `StaggerItem` from this file. **(4)** Update `src/app/(site)/page.tsx` — wrap the "Latest Arrivals" heading + grid in `<FadeIn>`. Wrap the "Featured Collections" section in `<FadeIn delay={0.1}>`. **(5)** Update `src/components/ProductCard.tsx` — wrap the card content in `<motion.div>` with `whileHover={{ y: -4 }}` transition for a subtle lift on hover. **(6)** Update `src/app/(site)/collections/page.tsx` — wrap each collection card in `<StaggerItem>` inside a `<StaggerContainer>`. Keep all existing styles and logic unchanged. | Done: 2026-02-21 11:34
-
-- [x] **TASK G30:** Full copy audit and content improvement across the entire site — replace all placeholder text and generic AI copy with real brand voice. **(1) Brand page** (`src/app/(site)/brand/page.tsx`): The "Vision" section has a div showing "Campaign Image" text. Replace that `<div>` with an editorial styled placeholder: `bg-gradient-to-br from-neutral-900 to-neutral-700` background, with centred white text "IBRAHIM HAMED / IBY_CLOSET" in two lines, uppercase, tracking-widest. The surrounding copy is fine. **(2) FAQ** (`src/app/(site)/faq/page.tsx`): Read the file in full. Rewrite any generic AI-sounding answers. Shipping: mention 2–5 days within Lagos via GIG Logistics / dispatch rider, 5–10 days outside Lagos; international 10–21 days. Payment: Paystack (card/transfer), direct bank transfer, cash/POS at walk-in. Returns: exchange only within 7 days, items must be unworn with tags — no refunds. **(3) Size Guide** (`src/app/(site)/size-guide/page.tsx`): Read the file. If how-to-measure tips sound robotic, rewrite them in a warm, direct tone — e.g. "Don't pull the tape too tight — your shirt should fit, not squeeze." **(4) Contact page** (`src/app/(site)/contact/page.tsx`): Read the file. Instagram link: `https://instagram.com/iby_closet`. WhatsApp link: `https://wa.me/2348000000000`. Any phone number placeholder → replace with the WhatsApp number formatted as `+234 800 000 0000`. **(5) Lookbook** (`src/app/(site)/lookbook/page.tsx`): Read the file. If it has a Coming Soon state, replace the text with: title "The Lookbook", subtitle "Our campaign images and editorial shoots are coming soon." + "Follow us on Instagram for first looks" with an Instagram link. **(6) Track page** (`src/app/(site)/track/page.tsx`): Empty state text should read "Enter your order number above — format: IBY-2026-XXXXXX". Not-found state: "We couldn't find that order. Double-check the number and try again." **(7) Footer** (`src/components/Footer.tsx`): Read the file. Instagram href → `https://instagram.com/iby_closet`. WhatsApp href → `https://wa.me/2348000000000`. Copyright: `© {new Date().getFullYear()} iby_closet. All rights reserved.`. Remove any TODO or placeholder comments. IMPORTANT: Do not change data-fetching, API calls, or form logic. Only fix visible static text and links. | Done: 2026-02-21 11:45
-
-- [x] **TASK G31:** Improve all empty/placeholder image states site-wide so they look intentionally editorial rather than broken grey boxes. **(1)** Update `src/components/ProductCard.tsx` — when `imageUrl` is null, replace `bg-neutral-100` empty div with: `bg-neutral-900` + centred white product name text (uppercase, tracking-widest, text-xs, `px-4 text-center line-clamp-3`). **(2)** Update `src/app/(site)/collections/page.tsx` — collection cards with no `cover_image`: `bg-neutral-900` + centred white collection name text. **(3)** Update `src/app/(site)/collections/[slug]/page.tsx` — collection hero with no `cover_image`: replace plain bg-neutral-100 with `bg-black` + collection name as large white text (text-5xl md:text-7xl font-light uppercase tracking-widest, same aesthetic as homepage hero). **(4)** Update `src/app/(site)/products/[slug]/page.tsx` — product main image when no images exist: `bg-neutral-900` + product name centred in white. **(5)** Update `src/app/(site)/lookbook/page.tsx` — full-screen editorial placeholder: `min-h-screen bg-black flex items-center justify-center` with centred white text block: "THE LOOKBOOK" (text-4xl font-light tracking-[0.3em]), below it "Campaign images coming soon." (text-sm text-neutral-400 tracking-widest mt-4), below that an Instagram link. Do NOT change any data fetching logic. Only change the visual fallback for null/absent images and empty states. | Done: 2026-02-21 11:51
-
-- [x] **TASK G32:** Improve the Homepage hero + add an editorial mid-page section. **(1)** Update `src/app/(site)/page.tsx` hero section — add a subtle background texture effect: add a `<div>` overlay with `bg-[url('/noise.png')] opacity-5` (we'll use a CSS noise pattern instead since we have no image file — use a CSS `background-image: url("data:image/svg+xml,...")` via a Tailwind arbitrary value or just add a subtle `bg-gradient-to-br from-neutral-900 to-black` instead of flat black). Keep the hero text and CTA unchanged. **(2)** Add a new editorial strip section between the hero and "Latest Arrivals". It should be: `bg-neutral-50 border-y border-neutral-200 py-6 px-6 md:px-12` — a horizontal marquee or static strip with three brand pillars in uppercase tracking-widest text-xs, separated by `·` dividers: "Designed in Lagos · Founder-Led · Themed Collections". On mobile stack vertically centred, on desktop show as a single horizontal row. **(3)** After the Featured Collections section, add an Instagram CTA section: `bg-black py-20 text-center text-white`. Heading: "Follow the Journey" (text-2xl font-light uppercase tracking-widest). Subtext: "Behind the scenes, campaign shoots, and new drops — first on Instagram." (text-sm text-neutral-400 mt-4). Link: `<a href="https://instagram.com/iby_closet" target="_blank">@iby_closet</a>` styled as a border button (border border-white px-8 py-3 text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-colors mt-8 inline-block). No state, no fetching — this is purely static JSX. | Done: 2026-02-21 11:58
-
-- [x] **TASK G33:** Improve the Footer component with richer content and proper social links. Read `src/components/Footer.tsx` first. The footer should have: **(1)** Top section (3-col grid on desktop, stacked on mobile): col 1 — brand name "iby_closet" + tagline "Lagos menswear. Designed by Ibrahim Hamed." + social links (Instagram icon-link and WhatsApp icon-link using lucide-react `Instagram` and `MessageCircle` icons — both 18px, text-white, hover:text-neutral-400). col 2 — "Explore" links: Shop, Collections, Brand, Lookbook, Size Guide. col 3 — "Help" links: FAQ, Contact, Track Order. **(2)** Newsletter row (already exists — keep it, just make sure it still calls `POST /api/contacts`). **(3)** Bottom row: copyright `© {new Date().getFullYear()} iby_closet` left, and "Made in Lagos" right — both text-neutral-500 text-xs. **(4)** Full background: `bg-black text-white` (or keep existing). **(5)** Keep `'use client'` directive since the newsletter form needs state. Use `Link` from `next/link` for internal links, `<a>` for external. Don't break any existing newsletter submit logic. | Done: 2026-02-21 12:05
-
-### Batch 10 — Assigned 2026-02-22
-
-- [x] **TASK G34:** Homepage — replace gradient hero with a real full-bleed photo, add lookbook teaser strip, add brand teaser block, add local image fallbacks for products and collections. **File:** `src/app/(site)/page.tsx` and `src/app/globals.css`. **(1) Hero:** Replace the existing gradient/bg hero section entirely with: `<section className="relative h-screen overflow-hidden">` containing `<Image src="/images/instagram/post_16.jpg" alt="Rhythm & Thread — iby_closet" fill priority sizes="100vw" className="object-cover object-center" />`, a `<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />` scrim, and a bottom-anchored text block: `absolute bottom-0 left-0 right-0 z-10 px-8 pb-16 md:px-16 md:pb-20` containing: small uppercase label "Current Collection", h1 "Rhythm<br />&amp; Thread" (`text-6xl font-light uppercase tracking-[0.15em] text-white md:text-9xl leading-none`), and a Link to `/collections/rhythm-and-thread` styled as a white border button (`border border-white px-8 py-4 text-xs uppercase tracking-widest hover:bg-white hover:text-black transition-all`). Keep the trust badges / editorial pillar strip (added by G32) directly below the hero — do not remove it. **(2) Product fallbacks:** Add before the `return`: `const FALLBACK_PRODUCT_IMAGES = ['/images/instagram/product_101.jpg', '/images/instagram/product_102.jpg', '/images/instagram/product_103.jpg', '/images/instagram/product_104.jpg', '/images/instagram/product_105.jpg', '/images/instagram/product_106.jpg', '/images/instagram/product_107.jpg']`. In the `products.map()` callback, add an index parameter: `products.map((product, i) => ...)`. Then use `productImageMap[product.id] ?? FALLBACK_PRODUCT_IMAGES[i % 7]` as the imageUrl. **(3) Collection fallbacks:** Add `const COLLECTION_FALLBACK: Record<string, string> = { 'rhythm-and-thread': '/images/instagram/post_22.jpg', 'back-in-the-90s': '/images/instagram/post_24.jpg', 'default': '/images/instagram/post_20.jpg' }`. In the collection card render, replace the conditional `cover_image ? <Image> : null` with always showing `<Image src={collection.cover_image ?? COLLECTION_FALLBACK[collection.slug] ?? COLLECTION_FALLBACK['default']} alt={collection.name} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.02]" />`. Parent div already has `relative overflow-hidden` — no other changes needed. **(4) Lookbook teaser strip:** Insert a new `<section>` AFTER Latest Arrivals and BEFORE Featured Collections: heading "The Lookbook" + "View All" link to `/lookbook` on same row, then a `flex overflow-x-auto scrollbar-hide gap-3` container with 5 photo links: `/images/instagram/post_8.jpg`, `post_10.jpg`, `post_12.jpg`, `post_14.jpg`, `post_18.jpg` — each a `<Link href="/lookbook" className="relative flex-none w-[260px] md:w-[320px] aspect-[3/4] overflow-hidden bg-neutral-100 group">` containing `<Image fill sizes="320px" className="object-cover transition-transform duration-500 group-hover:scale-105" />`. Add `scrollbar-hide` CSS utility to `src/app/globals.css` inside `@layer utilities`: `.scrollbar-hide::-webkit-scrollbar { display: none; } .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }`. **(5) Brand teaser:** Insert a new `<section className="bg-black text-white">` BETWEEN Featured Collections and the Instagram CTA: a 2-col grid (`grid grid-cols-1 md:grid-cols-2 min-h-[70vh]`). Left col: `<div className="relative min-h-[50vh] md:min-h-auto overflow-hidden">` with `<Image src="/images/instagram/product_100.jpg" alt="Ibrahim Hamed — iby_closet founder" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover object-top" />` and a `<div className="absolute inset-0 bg-black/20" />` vignette. Right col: flex-col justify-center with: small label "The Founder", blockquote `&ldquo;African men deserve fashion<br />that tells a story.&rdquo;` (`text-2xl font-light leading-relaxed text-white md:text-3xl`), attribution "Ibrahim Hamed — designer, founder, Lagos." (`text-sm text-neutral-400`), and a Link to `/brand` styled as a white border button. `Image`, `Link`, and `FadeIn` are all already imported — no new imports needed. | Done: 2026-02-22 04:10
-
-### Batch 11 — Assigned 2026-02-22
-
-- [x] **TASK G36:** Build an interactive image gallery for the product detail page. **(1)** Create `src/app/(site)/products/[slug]/ProductImageGallery.tsx` — a `'use client'` component. Props: `{ images: { id: string; image_url: string; alt_text: string | null }[]; productName: string }`. State: `selectedIndex: number` (default 0). Renders: **(a)** Large selected image at top — `<div className="relative aspect-[4/5] overflow-hidden bg-neutral-900">` with `<Image src={images[selectedIndex].image_url} alt={...} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-opacity duration-300" />`. If `images` is empty, show `<span className="text-white uppercase tracking-widest text-sm">{productName}</span>` centred. **(b)** Thumbnail strip below (only render if `images.length > 1`) — `<div className="grid grid-cols-4 gap-2 mt-4">`. Each thumbnail: `<button onClick={() => setSelectedIndex(i)} className={\`relative aspect-[4/5] overflow-hidden bg-neutral-100 \${selectedIndex === i ? 'ring-2 ring-black ring-offset-1' : 'opacity-60 hover:opacity-100'} transition-opacity\`} type="button">` with `<Image src={img.image_url} alt={...} fill sizes="25vw" className="object-cover" />`. **(2)** Update `src/app/(site)/products/[slug]/page.tsx` — remove the existing static image block (the `<div className="space-y-4">` block containing the primary image div + the thumbnail grid div, lines 138–167). Replace entirely with: `<ProductImageGallery images={imageData} productName={productData.name} />`. Import `ProductImageGallery` at the top of the file. Keep all other parts of the page unchanged (product info, purchase panel, accordions). **(3) Also fix** the `export const dynamic = 'force-dynamic'` on line 8 of `products/[slug]/page.tsx` — it is currently placed between import statements. Move it to AFTER all imports (same recurring import-order bug — see coding standards in GEMINI.md). | Done: 2026-02-22 04:30
-
-- [x] **TASK G35:** Collections index page — add real local image fallbacks for collection cards.
-
-### Batch 12 — Assigned 2026-02-22
-
-### Batch 13 — Assigned 2026-02-22
-
-- [x] **TASK G38:** Related products strip on the product detail page. **File:** `src/app/(site)/products/[slug]/page.tsx`. After the existing accordion section (fabric details + care instructions), add a "You May Also Like" section. **(1)** Server-side: after fetching `collectionName`, add another fetch — if `productData.collection_id` exists, query `products` for up to 4 other active products in the same collection (`.eq('collection_id', productData.collection_id).eq('status', 'active').neq('id', productData.id).limit(4)`). If no collection or no results, fall back to any 4 active products (`.eq('status', 'active').neq('id', productData.id).limit(4)`). For each related product, fetch its primary image from `product_images` where `is_primary = true`. **(2)** Render below the accordions: `<section className="mt-16 border-t border-neutral-200 pt-12">` with heading `<h2 className="mb-8 text-sm uppercase tracking-widest">You May Also Like</h2>` and a `<div className="grid grid-cols-2 gap-6 md:grid-cols-4">` of `<ProductCard>` components. Import `ProductCard` from `@/components/ProductCard`. If no related products found, render nothing (don't show the section). **(3)** Keep the existing `Promise.all` fetch at the top of the function — add the related products fetch AFTER it (sequential is fine since it depends on `productData.collection_id`). No cache wrapping needed for this fetch. After completing, append to `GEMINI_DETAILED.md`. | Done: 2026-02-22 04:56
-
-- [x] **TASK G39:** Upgrade the collection detail page hero. **File:** `src/app/(site)/collections/[slug]/page.tsx`. **(1)** Read the file first to understand its current hero structure. **(2)** Replace the existing hero section with: `<section className="relative flex min-h-[60vh] items-end bg-black">` containing a full-bleed background image using the collection's `cover_image` with fallback: `cover_image ?? COLLECTION_FALLBACK[collection.slug] ?? COLLECTION_FALLBACK['default']`. Define `const COLLECTION_FALLBACK: Record<string, string> = { 'rhythm-and-thread': '/images/instagram/post_22.jpg', 'back-in-the-90s': '/images/instagram/post_24.jpg', 'default': '/images/instagram/post_20.jpg' }` before the `return`. The `<Image>` should use `fill`, `priority`, `object-cover object-top`, `className="..."`. **(3)** Add gradient scrim: `<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />`. **(4)** Overlay text block (z-10, bottom-anchored, px-8 pb-12 md:px-12 md:pb-16): small label "Collection" (text-xs uppercase tracking-widest text-neutral-400 mb-3), collection name as h1 (text-4xl md:text-6xl font-light uppercase tracking-widest text-white mb-4), if `collection.description` exists show it (text-sm text-neutral-300 max-w-xl leading-relaxed mb-4), if `collection.release_date` show a badge: `Released {format(new Date(collection.release_date), 'MMMM yyyy')}` (text-xs uppercase tracking-widest text-neutral-400). Import `format` from `date-fns` (already installed). **(5)** Keep the products grid section below the hero unchanged. Keep `generateMetadata` unchanged. After completing, append to `GEMINI_DETAILED.md`. | Done: 2026-02-22 04:56
-
-- [x] **TASK G40:** Add a "Back to top" floating button. **(1)** Create `src/components/BackToTop.tsx` — `'use client'`. Use `useState(false)` for visibility. `useEffect` adds a `scroll` event listener: `setVisible(window.scrollY > 400)`. On click: `window.scrollTo({ top: 0, behavior: 'smooth' })`. Render: `<button className={\`fixed bottom-6 right-6 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-black text-white shadow-lg transition-all duration-300 \${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}\`} onClick={...} aria-label="Back to top" type="button"><ChevronUp className="w-5 h-5" /></button>`. Import `ChevronUp` from `lucide-react`. **(2)** Add to `src/app/(site)/layout.tsx` — import `BackToTop` and render it inside the layout, after `{children}` and before `<Footer />`. Keep all existing layout content unchanged. After completing, append to `GEMINI_DETAILED.md`. | Done: 2026-02-22 04:56
-
-- [x] **TASK G37:** Three UI polish fixes — desktop hero crop, lookbook scroll arrows, collection card image anchoring. **(1) Hero image crop on desktop** — In `src/app/(site)/page.tsx`, find the hero `<Image>` with `className="object-cover object-top"`. Change `object-top` to `object-[center_25%]`. This shows the image 25% from the top, revealing the subject's face on wide/landscape desktop viewports while still looking good on mobile. **(2) Lookbook scroll strip — desktop arrow buttons** — The lookbook teaser strip is currently a plain `<div className="flex overflow-x-auto scrollbar-hide gap-3">` inside a server component. Extract this strip into a new `'use client'` component at `src/app/(site)/_components/LookbookStrip.tsx`. The component receives no props — hard-code the same 5 image paths inside it: `post_8, post_10, post_12, post_14, post_18`. Use a `useRef<HTMLDivElement>(null)` for the scroll container. Render: left arrow button (`<button onClick={() => ref.current?.scrollBy({ left: -340, behavior: 'smooth' })}>`) and right arrow button (`scrollBy({ left: 340 })`). Style arrows: `hidden md:flex absolute items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white hover:bg-black transition-colors z-10`. Left button: `left-2 top-1/2 -translate-y-1/2`. Right button: `right-2 top-1/2 -translate-y-1/2`. Wrap the whole thing in `<div className="relative px-6 md:px-12">` so arrows are positioned relative to the strip. The scroll `<div>` keeps `flex overflow-x-auto scrollbar-hide gap-3` — each item is a `<Link href="/lookbook" className="relative flex-none w-[260px] md:w-[320px] aspect-[3/4] overflow-hidden bg-neutral-100 group">` with `<Image fill sizes="320px" className="object-cover transition-transform duration-500 group-hover:scale-105" />`. After creating the component, import it in `src/app/(site)/page.tsx` and replace the old inline strip JSX with `<LookbookStrip />`. Keep the section heading row ("The Lookbook" + "View All" link) in `page.tsx` — only the scroll strip itself moves into the component. **(3) Collection card image anchoring** — In `src/app/(site)/collections/page.tsx`, find the collection card `<Image>` (the one with fallback chain `cover_image ?? COLLECTION_FALLBACK[...]`). Add `object-top` to its className so portrait photos show the top of the image (face/subject) rather than being cropped in the middle. Current: `"object-cover transition-transform duration-300 group-hover:scale-[1.02]"` → New: `"object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"`. Also do the same on the Featured Collections `<Image>` in `src/app/(site)/page.tsx` (same fix, same className update). After completing, append a section to `GEMINI_DETAILED.md` describing your decisions. Run a mental lint check — `export const dynamic` must be AFTER all imports. **File:** `src/app/(site)/collections/page.tsx`. **(1)** Add before the `return` statement: `const COLLECTION_FALLBACK: Record<string, string> = { 'rhythm-and-thread': '/images/instagram/post_22.jpg', 'back-in-the-90s': '/images/instagram/post_24.jpg', 'default': '/images/instagram/post_20.jpg' }`. **(2)** In the collection card render, find the `{collection.cover_image ? <Image .../> : <div ...text fallback...>}` conditional. Replace it entirely with: `<Image src={collection.cover_image ?? COLLECTION_FALLBACK[collection.slug] ?? COLLECTION_FALLBACK['default']} alt={collection.name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.02]" />`. The parent div already has `relative aspect-video overflow-hidden bg-neutral-900` — this is correct for the `fill` prop. Remove the text-overlay fallback div entirely. `Image` is already imported. Keep all other logic (StaggerContainer, StaggerItem, upcoming badge, NotifyMeButton, etc.) unchanged. | Done: 2026-02-22 04:47 | Done: 2026-02-22 04:12
 

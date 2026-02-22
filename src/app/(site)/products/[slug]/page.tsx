@@ -23,6 +23,8 @@ type ProductRecord = Pick<
   | 'fabric_details'
   | 'care_instructions'
   | 'status'
+  | 'unit_type'
+  | 'minimum_quantity'
 >;
 
 type ProductVariantRecord = Pick<ProductVariant, 'id' | 'size' | 'color' | 'stock_quantity'>;
@@ -38,7 +40,9 @@ async function getProductBySlug(slug: string) {
   return cachedFetch(`product_by_slug:${slug}`, async () => {
     const { data, error } = await supabaseServer
       .from('products')
-      .select('id, name, slug, description, price, collection_id, fabric_details, care_instructions, status')
+      .select(
+        'id, name, slug, description, price, collection_id, fabric_details, care_instructions, status, unit_type, minimum_quantity'
+      )
       .eq('slug', slug)
       .maybeSingle();
 
@@ -69,8 +73,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const { data: images } = await getProductImages(product.id);
   const primaryImage = images?.find((img) => img.is_primary)?.image_url ?? images?.[0]?.image_url ?? null;
 
-  const title = `${product.name} — iby_closet`;
-  const description = (product.description ?? `Shop ${product.name} at iby_closet`).substring(0, 160);
+  const title = `${product.name} — 315 Fabrics`;
+  const description = (product.description ?? `Shop ${product.name} at 315 Fabrics`).substring(0, 160);
 
   return {
     title,
@@ -208,6 +212,8 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
             productStatus={productData.status}
             primaryImageUrl={primaryImage?.image_url ?? null}
             variants={variantData}
+            unitType={(productData.unit_type ?? 'yard') as 'yard' | 'bundle'}
+            minimumQuantity={productData.minimum_quantity ?? 1}
           />
 
           <div className="space-y-4 border-t border-neutral-200 pt-6">

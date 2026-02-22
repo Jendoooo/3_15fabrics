@@ -20,7 +20,7 @@ function SuccessContent() {
         <h1 className="mb-6 text-4xl font-light uppercase tracking-widest">Order Confirmed</h1>
         <p className="mb-4 text-sm uppercase tracking-[0.2em] text-neutral-500">Order Number</p>
         <p className="mb-8 text-2xl font-light uppercase tracking-widest md:text-3xl">
-          {orderNumber || 'IBY-XXXXXX'}
+          {orderNumber || '315-XXXXXX'}
         </p>
         <p className="mb-12 text-sm text-neutral-500">
           We&apos;ll send updates to your WhatsApp as your delivery moves.

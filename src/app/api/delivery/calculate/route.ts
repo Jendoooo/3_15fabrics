@@ -24,7 +24,7 @@ export async function POST(request: Request) {
                     estimated_days: '7-14 business days'
                 },
                 {
-                    courier: 'iby_closet',
+                    courier: '315 Fabrics',
                     service: 'International Standard',
                     fee: 15000,
                     estimated_days: '14-21 business days'
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
             if (isLagos) {
                 options = [
                     {
-                        courier: 'Iby Logistics',
+                        courier: '315 Fabrics Delivery',
                         service: 'Same-day Delivery',
                         fee: 3500,
                         estimated_days: '0-1 days'

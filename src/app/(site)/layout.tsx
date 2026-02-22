@@ -9,12 +9,12 @@ import BackToTop from '@/components/BackToTop';
 
 export const metadata: Metadata = {
   title: {
-    default: 'iby_closet',
-    template: '%s — iby_closet',
+    default: '315 Fabrics',
+    template: '%s — 315 Fabrics',
   },
-  description: "Lagos men's fashion. Designed by Ibrahim Hamed.",
+  description: 'Premium asoebi fabrics — Ankara, French Lace, Swiss Voile, Aso-Oke, Senator and more. Based in Epe, Lagos. Shop online.',
   openGraph: {
-    siteName: 'iby_closet',
+    siteName: '315 Fabrics',
     locale: 'en_NG',
   },
 };

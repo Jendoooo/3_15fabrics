@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { supabaseServer } from '@/lib/supabase';
 import { cachedFetch } from '@/lib/cache';
 import type { Category, Product, ProductImage } from '@/lib/types';
@@ -6,7 +8,21 @@ import ShopFilter from './_components/ShopFilter';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ShopPage() {
+type ShopPageProps = {
+  searchParams?: {
+    gender?: string | string[];
+  };
+};
+
+export default async function ShopPage({ searchParams }: ShopPageProps) {
+  const genderParam = Array.isArray(searchParams?.gender)
+    ? searchParams?.gender[0]
+    : searchParams?.gender;
+  const gender =
+    genderParam && ['men', 'women', 'unisex'].includes(genderParam)
+      ? (genderParam as 'men' | 'women' | 'unisex')
+      : null;
+
   const { data: categories, error: categoriesError } = await supabaseServer
     .from('categories')
     .select('id, name, slug')
@@ -17,13 +33,20 @@ export default async function ShopPage() {
   }
 
   const { typedProducts, imageMap } = await cachedFetch(
-    'shop:products',
+    `shop:products:${gender ?? 'all'}`,
     async () => {
-      const { data: products, error: productsError } = await supabaseServer
+      let productsQuery = supabaseServer
         .from('products')
         .select('id, name, slug, price, category_id')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .eq('status', 'active');
+
+      if (gender) {
+        productsQuery = productsQuery.eq('gender', gender);
+      }
+
+      const { data: products, error: productsError } = await productsQuery.order('created_at', {
+        ascending: false,
+      });
 
       if (productsError) {
         throw new Error(productsError.message);
@@ -77,6 +100,26 @@ export default async function ShopPage() {
   return (
     <main className="min-h-screen bg-white text-black py-24 px-6 md:px-12">
       <h1 className="mb-12 text-4xl font-light uppercase tracking-widest md:text-5xl">Shop All</h1>
+      <div className="mb-8 flex flex-wrap gap-2">
+        {(['all', 'men', 'women', 'unisex'] as const).map((g) => {
+          const href = g === 'all' ? '/shop' : `/shop?gender=${g}`;
+          const active = (gender ?? 'all') === g;
+
+          return (
+            <Link
+              key={g}
+              href={href}
+              className={`border px-4 py-1.5 text-xs uppercase tracking-widest transition-colors ${
+                active
+                  ? 'border-black bg-black text-white'
+                  : 'border-neutral-300 text-neutral-600 hover:border-black hover:text-black'
+              }`}
+            >
+              {g === 'all' ? 'All' : g.charAt(0).toUpperCase() + g.slice(1)}
+            </Link>
+          );
+        })}
+      </div>
       <ShopFilter products={productsForFilter} categories={typedCategories} />
     </main>
   );

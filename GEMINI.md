@@ -9,7 +9,7 @@
 
 ## Your Role
 
-You are a **coding agent** for the iby_closet project. You implement assigned tasks from `task.md`.
+You are a **coding agent** for the 315 Fabrics project. You implement assigned tasks from `task.md`.
 
 **Before starting any session:**
 1. Read `CLAUDE.md` — full project brief, stack, file structure, DB schema
@@ -18,17 +18,31 @@ You are a **coding agent** for the iby_closet project. You implement assigned ta
 
 **After completing a task:**
 1. Mark it done in `task.md` — change `[ ]` to `[x]`, append `| Done: YYYY-MM-DD HH:MM`
-2. Log what you did in the Progress Log below
+2. Log what you did in the Progress Log below — **write detailed rationale, not just a summary**
+
+**Progress log format (required):**
+```
+### [Task ID] — [Task name] | Done: YYYY-MM-DD HH:MM
+- **What I did:** [files changed, functions added/modified]
+- **Why I approached it this way:** [key decisions, trade-offs, alternatives considered]
+- **Tricky parts:** [any edge cases, gotchas, or non-obvious choices]
+- **What Claude should verify:** [specific things worth double-checking]
+```
+This detail saves Claude tokens when auditing — the more specific you are, the faster the review.
 
 ---
 
 ## Project Context Quick Reference
 
+- **Brand:** 315 Fabrics — fabric store, Epe Lagos, Instagram @3_15fabrics
 - **Stack:** Next.js 14 App Router, TypeScript, Tailwind CSS, Supabase, Paystack, Resend, Fonnte, Cloudinary, PostHog, Upstash Redis
-- **DB:** Supabase — see migration at `supabase/migrations/20240221000000_initial_schema.sql`
-- **Components:** `src/components/` (Header, Footer)
-- **Pages:** `src/app/` (shop, collections, products/[slug], cart, checkout, track)
-- **Order format:** `IBY-YYYYXXXX`
+- **DB:** Supabase — see migrations at `supabase/migrations/`
+- **Order format:** `315-YYYY-XXXXXX` (NOT `IBY-`)
+- **WhatsApp:** `2349066609177`
+- **Cart key:** `315fabrics-cart` (NOT `iby-closet-cart`)
+- **Fabric purchase model:** `unit_type` ('yard' | 'bundle'), `minimum_quantity` (min yards), `yards_ordered` in order_items
+- **Variants:** colorways only — `color` = colorway name, `size = null` always
+- **Pages:** `src/app/(site)/` route group for customer-facing pages
 - **Full brief:** `CLAUDE.md`
 - **All tasks:** `task.md`
 
@@ -43,187 +57,441 @@ You are a **coding agent** for the iby_closet project. You implement assigned ta
 - API routes in `src/app/api/` using Next.js Route Handlers
 - Environment variables must exist in `.env.example` — never hardcode secrets
 - Mobile-first — test layouts at 375px width first
-- **⚠ CRITICAL:** `export const dynamic = 'force-dynamic'` must ALWAYS be placed AFTER all import statements — never between them. This has caused ESLint build failures multiple times (G16, G32, G35). In Next.js App Router, all `import` declarations must come first, then exports and code.
+- **CRITICAL:** `export const dynamic = 'force-dynamic'` must ALWAYS be placed AFTER all import statements — never between them. This has caused build failures repeatedly. In Next.js App Router, all `import` declarations must come first, then exports and code.
+- **Yards logic:** In the cart and order, `quantity` field = yards ordered for yard-type products (or 1 for bundles). Line total = `unit_price × quantity`. Do NOT add separate price calculation logic — the existing subtotal math still works.
+
+---
+
+## ⚠ NEW TASKS — Batch 1 (2026-02-22)
+
+You have 3 new tasks: **G1, G2, G3**. Read `task.md` for full specs. Work order: **G1 → G2 → G3**.
+
+### G1: Schema migration + types.ts update
+Create the new migration file and update types.
+
+**Files to create/edit:**
+- Create `supabase/migrations/20260222000001_315fabrics_schema.sql`
+- Edit `src/lib/types.ts`
+
+**Migration SQL:**
+```sql
+-- 315 Fabrics schema additions
+ALTER TABLE products ADD COLUMN IF NOT EXISTS unit_type TEXT DEFAULT 'yard'
+  CHECK (unit_type IN ('yard', 'bundle'));
+ALTER TABLE products ADD COLUMN IF NOT EXISTS minimum_quantity NUMERIC NOT NULL DEFAULT 1;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS fabric_type TEXT;
+
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS yards_ordered NUMERIC;
+```
+
+**types.ts changes:**
+- In `Product` type: add `unit_type: string`, `minimum_quantity: number`, `fabric_type: string | null`
+- In `OrderItem` type: add `yards_ordered: number | null`
+- In the `Database` type at the bottom: the Row types for products and order_items will automatically reflect the Product and OrderItem interfaces — no separate changes needed there.
+
+### G2: Backend branding + order number + cart store lib
+Rebrand the backend and update core logic files.
+
+**Files to edit:**
+
+**`src/app/api/orders/route.ts`:**
+- Change order number generation prefix from `IBY-` to `315-`. Find the line(s) where the order number is assembled (e.g. the random alphanumeric string construction) and change the prefix string.
+- Accept `yards_ordered` from each item in the request body. When inserting into `order_items`, include `yards_ordered: item.yards_ordered ?? item.quantity` (fall back to quantity if not provided).
+
+**`src/lib/email.ts`:**
+- Replace every occurrence of `iby_closet`, `iby closet`, `IBY`, `iby-closet`, `Ibrahim Hamed` with `315 Fabrics` or `315fabrics` as appropriate.
+- Update sender/from name to "315 Fabrics".
+- Update WhatsApp number to `2349066609177` wherever it appears.
+- All tracking links already use `NEXT_PUBLIC_APP_URL` — verify this is still the case.
+
+**`src/lib/cart-store.ts`:**
+- Add `unit_type: 'yard' | 'bundle'` to the `CartItem` type.
+- Add `minimum_quantity: number` to the `CartItem` type.
+- Rename the localStorage key from `'iby-closet-cart'` to `'315fabrics-cart'` (in the `persist` config at the bottom: `name: '315fabrics-cart'`).
+- No changes needed to `addItem`, `removeItem`, `updateQuantity`, or `getTotals` — they all use `quantity` which works as-is.
+
+**`src/app/api/delivery/calculate/route.ts`:**
+- Find and rename the service label "Iby Logistics Same-day" to "315 Fabrics Delivery". Also update any other "iby" or "Iby" references in the delivery options objects.
+
+**`package.json`:**
+- Change `"name": "iby_closet"` to `"name": "315-fabrics"`.
+
+### G3: Seed fabric categories + fix hardcoded URLs
+Seed the 6 fabric categories into the DB and fix hardcoded iby-closet.com URLs.
+
+**Files to create/edit:**
+
+**Create `scripts/seed_fabric_categories.js`:**
+Follow the exact same pattern as `scripts/seed_collection_and_variants.js` or other existing scripts in `/scripts/` (they load `.env.local` via dotenv and use the Supabase JS client). Insert these 6 categories (upsert on `slug` to avoid duplicates):
+
+```js
+const categories = [
+  { name: 'Ankara & African Print', slug: 'ankara-african-print', sort_order: 1 },
+  { name: 'French Lace & Swiss Voile', slug: 'french-lace-swiss-voile', sort_order: 2 },
+  { name: 'Aso-Oke & Traditional', slug: 'asoke-traditional', sort_order: 3 },
+  { name: 'Senator & Corporate', slug: 'senator-corporate', sort_order: 4 },
+  { name: 'Wedding & Asoebi', slug: 'wedding-asoebi', sort_order: 5 },
+  { name: 'New Arrivals', slug: 'new-arrivals', sort_order: 6 },
+];
+```
+
+Use `.upsert(categories, { onConflict: 'slug' })`. Log success or errors.
+
+**Edit `src/app/sitemap.ts`:**
+- Find the hardcoded base URL (currently `https://iby-closet.com` or similar constant).
+- Replace with: `const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';`
+- Use `BASE_URL` wherever the hardcoded URL was used.
+
+**Edit `src/app/robots.ts`:**
+- Find the hardcoded sitemap URL (currently `https://iby-closet.com/sitemap.xml`).
+- Replace with: `\`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/sitemap.xml\``
+
+---
+
+## ⚠ NEW TASKS — Batch 2 (2026-02-22)
+
+You have 1 new task: **G4**. Complete G1 → G2 → G3 → G4 in order.
+
+**Note on G1 update:** The migration `20260222000001_315fabrics_schema.sql` already exists and was run. G1 now means: create the NEW gender migration (`20260222000002_gender_column.sql`) + update `types.ts` with ALL new fields (unit_type, minimum_quantity, fabric_type, yards_ordered, gender). See `task.md` for exact spec.
+
+---
+
+### G4: Instagram Import Pipeline
+
+**File to create:** `scripts/seed_from_instagram.js`
+
+This script reads `IGPOSTS_USERS_3_15fabrics_100.xlsx` (100 Instagram posts from @3_15fabrics) and seeds all non-video posts as **draft products** into Supabase, with images uploaded to Cloudinary.
+
+**Excel columns available:** Media ID, Shortcode, Date(GMT), Caption, Image URL, Image URLs (newline-separated carousel URLs), Thumbnail URL, Is Carousel (YES/NO), Is Video (YES/NO), Post URL, Likes, Comments.
+
+**Script pattern — follow exactly:**
+```js
+// At top:
+require('dotenv').config({ path: '.env.local' });
+const { createClient } = require('@supabase/supabase-js');
+const cloudinary = require('cloudinary').v2;
+const XLSX = require('xlsx');
+// node-fetch v2 (CommonJS compatible): const fetch = require('node-fetch');
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+```
+
+**Main logic (async IIFE):**
+1. `const wb = XLSX.readFile('./IGPOSTS_USERS_3_15fabrics_100.xlsx');`
+2. `const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);`
+3. Filter: `rows.filter(r => r['Is Video'] !== 'YES')`
+4. For each row, build product and upsert + upload images. Full spec in `task.md` G4.
+
+**Helper — uploadToCloudinary(url, publicId):**
+```js
+async function uploadToCloudinary(url, publicId) {
+  const response = await fetch(url);
+  const buffer = await response.buffer();
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      { folder: '315fabrics/instagram', public_id: publicId },
+      (error, result) => error ? reject(error) : resolve(result.secure_url)
+    ).end(buffer);
+  });
+}
+```
+
+**Emoji strip helper:**
+```js
+function stripEmojis(str) {
+  return str.replace(/[\u{1F000}-\u{1FFFF}|\u{2600}-\u{27BF}|\u{1F900}-\u{1F9FF}|\u{FE00}-\u{FEFF}]/gu, '').trim();
+}
+```
+
+**Fabric type detection:**
+```js
+function detectFabricType(caption) {
+  if (!caption) return null;
+  const c = caption.toLowerCase();
+  if (c.includes('ankara')) return 'Ankara';
+  if (c.includes('lace')) return 'French Lace';
+  if (c.includes('voile')) return 'Swiss Voile';
+  if (c.includes('aso-oke') || c.includes('asooke')) return 'Aso-Oke';
+  if (c.includes('senator')) return 'Senator';
+  if (c.includes('cotton')) return 'Cotton';
+  return null;
+}
+```
+
+**Do NOT run the script** — just create it. The user will run it manually after verifying Cloudinary credentials in `.env.local`.
+
+---
+
+## ⚠ NEW TASKS — Batch 3 (2026-02-22)
+
+You have 2 new tasks: **G5, G6**. Work order: G5 → G6.
+
+---
+
+### G5: Admin session cookie + Cloudinary folder + admin UI branding
+
+**Files to edit:**
+
+**(1) Admin session cookie rename** — find every file that reads, sets, or deletes the cookie named `'iby_admin_session'` and rename it to `'315fabrics_admin_session'`. Files to check (read each before editing):
+- `src/middleware.ts` — cookie check in admin path guard
+- `src/app/api/admin/auth/route.ts` — cookie is SET on login
+- `src/app/api/admin/logout/route.ts` — cookie is DELETED
+- `src/app/api/admin/collections/[id]/route.ts` — auth check
+- `src/app/api/admin/orders/[id]/route.ts` — auth check; also fix any `iby_closet` in email text and fix `https://iby-closet.com/track` URL → use `` `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/track` ``
+- `src/app/api/admin/products/[id]/route.ts` — auth check
+- `src/app/api/admin/stats/route.ts` — auth check
+
+**(2) Cloudinary upload folder** — `src/app/api/upload/image/route.ts`:
+- Change folder from `'iby_closet/products'` → `'315fabrics/products'`
+- Also rename cookie check from `iby_admin_session` → `315fabrics_admin_session`
+
+**(3) Admin sidebar** — `src/app/admin/_components/AdminSidebar.tsx`:
+- Update brand name/logo text from `iby_closet` → `315 Fabrics`. Keep layout unchanged.
+
+**(4) Admin login page** — `src/app/admin/login/page.tsx`:
+- Update any visible `iby_closet` brand text to `315 Fabrics`.
+
+**(5) Abandoned cart email URL** — `src/app/api/abandoned-cart/recover/route.ts`:
+- Fix hardcoded `https://iby-closet.com/cart` → `` `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/cart` ``
+
+**Verification:** After editing, `grep -r "iby_admin_session" src/` should return 0 results. `grep -r "iby_closet" src/` should also return 0 results.
+
+---
+
+### G6: FAQ page rewrite + track page fix
+
+**Files to edit:**
+
+**(1) Rewrite `src/app/(site)/faq/page.tsx`** — read the file first. Keep the same accordion/section layout and component structure. Replace ALL content with fabric store Q&As. Also:
+- Update metadata: `title: 'FAQ'`, description referencing 315 Fabrics fabric store
+- Replace all `@iby_closet` → `@3_15fabrics`, all old WhatsApp numbers → `2349066609177`, all `IBY-XXXXXXXX` order format examples → `315-YYYY-XXXXXX`
+
+New Q&A content by section:
+
+**Ordering & Yards:**
+- "How do I know how many yards I need?" — "Check our [Yardage Guide](/yardage-guide) for a breakdown by outfit type. When in doubt, add an extra half yard."
+- "What is the minimum order?" — "Each product listing shows the minimum. Most fabrics start at 5 yards."
+- "Can I order a custom amount of yards?" — "Yes, for yard-type products you choose how many yards you need (subject to stock)."
+- "What does 'bundle' mean?" — "A bundle is a fixed set of yards sold as one complete unit — perfect for a single outfit."
+
+**Fabric Types:**
+- "What types of fabric do you sell?" — "We carry Ankara, French Lace, Swiss Voile, Aso-Oke, Senator, and Cotton. New arrivals drop regularly."
+- "Do you do asoebi group orders?" — "Yes! WhatsApp us at +234 906 660 9177 for bulk pricing for events and wedding groups."
+
+**Payment:**
+- "How do I pay?" — "Online via card or bank transfer through Paystack (secure). You can also place orders via WhatsApp and pay by bank transfer."
+- "Is payment secure?" — "Yes — all online payments are processed by Paystack, a trusted Nigerian payment gateway."
+
+**Delivery:**
+- "Do you deliver nationwide?" — "Yes, we deliver across Nigeria."
+- "How long does delivery take?" — "Lagos: 2–5 working days. Outside Lagos: 3–7 working days."
+- "How much is delivery?" — "Delivery fee is calculated at checkout based on your location."
+
+**Returns & Quality:**
+- "What if my fabric is faulty?" — "Contact us within 48 hours of receiving your order. WhatsApp +234 906 660 9177 with photos and your order number."
+- "Are your fabrics authentic?" — "Yes — all fabrics are sourced directly from trusted suppliers. We don't sell substandard goods."
+
+**(2) Fix `src/app/(site)/track/page.tsx`** — read the file. Find any order number format example text (e.g. `IBY-2026-XXXXXX` or similar). Change it to `315-2026-XXXXXX`. Only change the example/display text — do not touch form logic, API calls, or state.
+
+---
+
+## ⚠ NEW TASKS — Batch 4 (2026-02-22)
+
+You have 8 new tasks: **G7 → G8 → G9 → G10 → G11 → G12 → G13 → G14**. Work strictly in order.
+
+---
+
+### G7: Order email — yards display
+
+**File:** `src/lib/email.ts` — read the full file first.
+
+Find the HTML order confirmation email template (there will be an order items loop). Fix the item row:
+- Replace `Size: ${item.size || 'N/A'}` with `` `${item.yards_ordered ?? item.quantity} yards — ${item.color || 'Standard'}` ``
+- This shows e.g. "5 yards — Wine Red" instead of "Size: N/A"
+
+Also update the **WhatsApp notification** (Fonnte message body, likely also in this file or in `src/app/api/admin/orders/[id]/route.ts`). Find where the message lists order items and apply the same fix: show yards + colorway, not size.
+
+No other changes to email.ts.
+
+---
+
+### G8: Repurpose collections page as "Shop by Fabric Type"
+
+**File:** `src/app/(site)/collections/page.tsx` — read first.
+
+Replace the entire component. The current version shows editorial campaigns (iby_closet). New version shows the 6 fabric categories.
+
+**What to remove:** `NotifyMeButton`, `StaggerContainer`, `StaggerItem`, `Collection` type, all fallback image references to `/images/instagram/` (these files were deleted).
+
+**New query:**
+```ts
+const { data: categories } = await supabaseServer
+  .from('categories')
+  .select('id, name, slug')
+  .order('sort_order', { ascending: true });
+```
+
+**New UI:**
+- Title: "Shop by Fabric Type"
+- White background, black text
+- 2-column mobile, 3-column md+ grid
+- Each card: `<Link href={"/shop/" + category.slug}>`, border-neutral-200 border, p-8, hover:border-black transition
+- Inside card: `<p className="text-lg uppercase tracking-widest">{category.name}</p>` + `<span className="mt-3 block text-xs uppercase tracking-widest text-neutral-400 group-hover:text-black transition-colors">Shop →</span>`
+
+**Critical:** `export const dynamic = 'force-dynamic'` must go AFTER all import statements.
+
+---
+
+### G9: Homepage — show fabric categories in "Shop by Category" section
+
+**File:** `src/app/(site)/page.tsx` — read first.
+
+The homepage currently queries `collections` for its "Shop by Category" grid. Change this:
+
+1. In the `cachedFetch` block, replace the collections query with:
+```ts
+const { data: featuredCategories } = await supabaseServer
+  .from('categories')
+  .select('id, name, slug')
+  .order('sort_order', { ascending: true })
+  .limit(6);
+// ...
+return { products, productImageMap, categories: (featuredCategories ?? []) };
+```
+
+2. Rename `FeaturedCollection` type → `FabricCategory = Pick<Category, 'id' | 'name' | 'slug'>`.
+
+3. Update the "Shop by Category" JSX grid:
+- Each card: `<Link href={"/shop/" + category.slug}>` (not `/collections/...`)
+- Since categories have no cover_image, use a text-only card: dark grey background (`bg-neutral-900`), white text, centered, `aspect-video` or `min-h-[140px]` with flex items-center justify-center
+- Category name: `text-sm uppercase tracking-widest text-white text-center`
+
+4. Change "All Categories" link: `href="/shop"` (not `/collections`)
+
+5. Remove `Collection` from the `type` import at the top.
+
+---
+
+### G10: Seed test products script
+
+**Create `scripts/seed_test_products.js`** — follow the same pattern as other scripts (dotenv + supabase). Insert 2 products with variants and images. Use upsert on slug.
+
+**Product 1 (yard-type):**
+```js
+{ name: 'Rich Ankara Print — Test', slug: 'test-ankara-print', description: 'Test product for checkout.', price: 5000, status: 'active', unit_type: 'yard', minimum_quantity: 5, fabric_type: 'Ankara', gender: 'unisex', is_featured: true }
+```
+Variants: `{ color: 'Wine Red', size: null, stock_quantity: 20 }`, `{ color: 'Navy Blue', size: null, stock_quantity: 15 }`
+Image: `{ image_url: 'https://placehold.co/600x800/222/fff?text=Ankara+Test', is_primary: true, sort_order: 0 }`
+
+**Product 2 (bundle-type):**
+```js
+{ name: 'Senator Bundle — Test', slug: 'test-senator-bundle', description: 'Test bundle product.', price: 35000, status: 'active', unit_type: 'bundle', minimum_quantity: 8, fabric_type: 'Senator', gender: 'men', is_featured: false }
+```
+Variants: `{ color: 'Charcoal Grey', size: null, stock_quantity: 10 }`, `{ color: 'Champagne', size: null, stock_quantity: 8 }`
+Image: `{ image_url: 'https://placehold.co/600x800/333/ccc?text=Senator+Bundle', is_primary: true, sort_order: 0 }`
+
+Log: "✓ Product 1 created", etc. **Do NOT run** — create only.
+
+---
+
+### G11: Add sort param to shop page
+
+**File:** `src/app/(site)/shop/page.tsx` — read first.
+
+Add `sort` to `searchParams`:
+```ts
+type ShopPageProps = {
+  searchParams?: {
+    gender?: string | string[];
+    sort?: string | string[];
+  };
+};
+```
+
+Extract and validate sort:
+```ts
+const sortParam = Array.isArray(searchParams?.sort) ? searchParams?.sort[0] : searchParams?.sort;
+const sort = (['newest', 'price-asc', 'price-desc'] as const).includes(sortParam as 'newest' | 'price-asc' | 'price-desc') ? (sortParam as 'newest' | 'price-asc' | 'price-desc') : 'newest';
+```
+
+Apply to Supabase query (after the gender filter, before closing the chain):
+```ts
+if (sort === 'price-asc') productsQuery = productsQuery.order('price', { ascending: true });
+else if (sort === 'price-desc') productsQuery = productsQuery.order('price', { ascending: false });
+else productsQuery = productsQuery.order('created_at', { ascending: false });
+```
+
+Update cachedFetch key: `` `shop:products:${gender ?? 'all'}:${sort}` ``
+
+Pass `sort={sort}` as an additional prop to `<ShopFilter>`. Update ShopFilter's props type to accept `sort?: string` (no logic change in ShopFilter yet — C9 adds the sort UI separately).
+
+---
+
+### G12: Admin manual order form — yards + cleanup
+
+**File:** `src/app/admin/orders/new/page.tsx` — read first.
+
+**(1)** Grep for `iby_closet`, `IBY-`, old WhatsApp — fix any found.
+
+**(2)** Find where order items are added (the per-item form row). Each item should have a "Yards Ordered" input alongside the quantity. Add a `yardsOrdered` field (number, default = quantity) per item in the form state. When building the order payload for `POST /api/orders`, include `yards_ordered: item.yardsOrdered ?? item.quantity` per item.
+
+---
+
+### G13: Admin quick-sale — yards + cleanup
+
+**File:** `src/app/admin/quick-sale/page.tsx` — read first.
+
+**(1)** Grep for any `iby_closet`, `IBY-` — fix.
+
+**(2)** When the component builds the order payload for `POST /api/orders`, each item object should include `yards_ordered: item.quantity`. This is typically a one-line addition to the item object in the payload construction.
+
+---
+
+### G14: Admin products list — show fabric_type and unit_type columns
+
+**File:** `src/app/admin/products/page.tsx` — read first.
+
+Add `fabric_type` and `unit_type` to the select query and to the rendered table:
+- Add to Supabase select: `fabric_type, unit_type`
+- Add to table header: "Fabric Type" and "Sold By" columns (keep all existing columns)
+- In each row: `{product.fabric_type ?? '—'}` and `{product.unit_type === 'bundle' ? 'Bundle' : 'Per Yard'}`
+- TypeScript: update the type alias to include these fields
+- No other layout or logic changes
 
 ---
 
 ## Progress Log
 
-- [2026-02-21 04:44] Initialized Next.js 14 App Router project (TypeScript, Tailwind CSS). Installed core dependencies: @supabase/supabase-js, react-paystack, resend, cloudinary, posthog-js, @upstash/redis, lucide-react, date-fns. Created Supabase schema migration (`supabase/migrations/20240221000000_initial_schema.sql`) with tables: contacts, categories, collections, products, product_images, product_variants, customers, addresses, orders, order_items, delivery_tracking, waitlist, abandoned_carts.
-- [2026-02-21 05:15] Scaffolded base UI pages: `src/app/shop/page.tsx`, `src/app/collections/page.tsx`, `src/app/products/[slug]/page.tsx`, `src/app/cart/page.tsx`, `src/app/checkout/page.tsx`, `src/app/checkout/success/page.tsx`, `src/app/track/page.tsx`. Created `src/components/Header.tsx` (sticky nav) and `src/components/Footer.tsx` (links + waitlist form).
-- [2026-02-21 05:18] Added agent tracking files. Integrated logo images.
-- [2026-02-21 05:40] Read `CLAUDE.md` and `task.md` and completed all Gemini tasks (G1-G8): Set up `.env.example`, created typed Supabase client in `src/lib/supabase.ts`, defined db types in `src/lib/types.ts`. Built backend API endpoints for: contacts (`POST /api/contacts`), order creation (`POST /api/orders`), public order tracking (`GET /api/orders/[orderNumber]`), Paystack webhook (`POST /api/paystack/webhook`), and delivery calculation (`POST /api/delivery/calculate`). Marked tasks done in `task.md`.
-- [2026-02-21 06:19] Completed Tasks G9-G12. Built Admin Collections CRUD pages and forms. Built Admin Contacts view with bulk CSV export and Fonnte WhatsApp broadcast functionality. Built Admin Manual Order Entry screen with real-time product search and variant handling. Built mobile-friendly Admin Quick Sale POS screen for walk-ins. Marked all 4 tasks as completed in `task.md` and fixed related backend schema generic TS types.
-- [2026-02-21 07:01] Processed raw Instagram HTML dumps to extract real product names, prices, descriptions, and high-resolution images. Downloaded 34 unique product images locally to `public/images/instagram` and wrote a Node.js script to automatically seed these products into the Supabase `products` and `product_images` tables. This ensures the frontend will have access strictly to genuine app data rather than placeholders.
-- [2026-02-21 07:17] Debugged Shop page crash caused by React Hydration Mismatch related to `toLocaleString` formatting. Replaced with manual numeric string parsing. Also debugged and restored Next.js global Tailwind styling which stripped CSS components due to conflicting `prefers-color-scheme: dark` variables.
-- [2026-02-21 08:30] Completed tasks G13-G15. Built the `POST /api/waitlist` route to capture email and WhatsApp signups. Created and executed `scripts/seed_collection_and_variants.js` to seed the "Rhythm & Thread" collection, link all active products, and automatically generate shoe/shirt/hat sizes and stock quantities. Built a custom cookie-based authentication system for the admin panel using Next.js Middleware (`src/middleware.ts`), completely replacing the client-side Supabase auth checks. Added safe logout routing. Marked all tasks completed in `task.md`.
-- [2026-02-21 08:24] Handled Task G16 by implementing Upstash Redis connection (`src/lib/redis.ts`) and global cache helper (`src/lib/cache.ts`). Automatically fetched, mapped and injected cached products, collections and images straight into `shop/page.tsx` and `page.tsx` frontend views with explicit TTL configuration.
-- [2026-02-21 08:26] Handled Task G17 by importing the Resend email service mapping (`src/lib/email.ts`) and formatting dynamic HTML receipt emails that automatically fire synchronously upon checkout creation (`POST /api/orders`) and asynchronous webhooks updates via Paystack payloads (`POST /api/paystack/webhook`).
-- [2026-02-21 08:42] Handled Task G18 by updating the `api/delivery/calculate` route to respond to varied country conditions and supply default international DHL delivery options where relevant. Handled Task G19 by installing Vitest, creating a robust custom chainable Supabase mock layer within an isolated `setup.ts` test configurator, and writing validation assertions targeting parameter validation within the delivery calculation route and the database insert validations mapped globally via tests across `POST /api/orders`.
-- [2026-02-21 09:27] Handled Batch 5 tasks G20 and G21. Added a responsive full-screen mobile menu layer inside `Header.tsx` which integrates smooth scroll-locking and uses native icons. Built a reusable `<ProductCard>` element holding localized rendering structures and hover animations, and then purged repetitive inline grid loops across the four shop/collection directories (replacing them with the robust core component).
-- [2026-02-21 09:37] Handled Batch 6 tasks G22 and G23. Upgraded the `/admin/orders/page.tsx` with a dynamic real-time client-side search overlay to index through arrays containing `order_number` or `customer_name` variables alongside the previously existing category and status selection filters. Engineered the backend `POST /api/abandoned-cart/recover` route combining email (Resend) and HTTP webhook (Fonnte API for WhatsApp) multi-channel configurations structured directly into Supabase database inserts.
-- [2026-02-21 10:11] Ad-hoc debugging: Fixed serious React Hydration Mismatch issues occurring across `src/components/Header.tsx`, `src/app/(site)/cart/page.tsx` and `ProductPurchasePanel.tsx`. The mismatches were caused by direct synchronous server-side rendering of client-persisted Zustand properties (`useCartStore`). This effectively detached the React Event Listeners on mount, preventing the "Add to Cart" button from firing. Added mounted checks (`useEffect`) to delay rendering cart properties to the client phase, securing interactions for the 'test-checkout-tee'.
-- [2026-02-21 10:45] Handled Batch 7 tasks G24, G25, and G26. Added Next.js `generateMetadata` exports mapped to cached Supabase reads across `products/[slug]/page.tsx`, `collections/[slug]/page.tsx`, and the root `layout.tsx` for dynamic SEO. Handled order inventory decrements directly inside the checkout `POST /api/orders` flow safely avoiding transactional rollbacks on 0 stock. Lastly, developed the `GET /api/admin/stats` proxy utilizing parallel data aggregation fetches, secured strictly behind the `iby_admin_session` cookie pattern targeting Codex's dashboard tasks.
-- [2026-02-21 11:15] Handled Batch 8 tasks G27 and G28. Engineered the core Cloudinary bulk asset uploader routing at `POST /api/upload/image` enforcing strict Node.js upload streaming and `multipart/form-data` conversion via Buffer formats inside restricted sizes, securing straight to Cloudinary instances securely via environmental mappings. Engineered and implemented dynamic backend caching invalidation handlers at `src/lib/invalidate-cache.ts` that safely hooks into fresh `PATCH` & `DELETE` product + collection modification webhooks utilizing Next.js layout `revalidatePath` and `redis.del` patterns. Generated Next.js implicit `robots.ts` config.
-- [2026-02-21 12:15] Completed Batch 9 frontend tasks (G29-G33). Integrated Framer Motion for scroll/hover animations across homepage, shop, and product lists (G29). Conducted a full copy audit to replace placeholder defaults with the brand's intended voice and functional contact links (G30). Implemented sleek, editorial black empty-state fallbacks for products and lookbooks lacking imagery (G31). Elevated the Homepage with a gradient hero override, a brand pillar marquee strip, and an Instagram CTA section (G32). Finally, restructured the global Footer into an elegant modern 3-column + isolated newsletter row layout wielding proper internal routing and external Lucide social icons (G33).
-- [2026-02-22 04:15] Completed Batch 10 tasks (G34, G35). Upgraded the homepage hero to a full-bleed campaign photo and replaced structural gradients. Inserted a new static horizontal lookbook teaser scroll strip and a founder quote block. Injected dynamic fallback mapping to safely render static local images on product and collection cards across both the Homepage and Collections index when database imagery is missing, effectively removing all plain-text black box fallbacks.
-- [2026-02-22 04:30] Completed Batch 11 task G36. Replaced the static multi-image list on the product detail page with an interactive `ProductImageGallery.tsx` client component that wields an active preview and clickable thumbnail row. Rectified Next.js top-level import ordering bugs throwing ESLint violations in `src/app/(site)/products/[slug]/page.tsx`.
-- [2026-02-22 04:47] Completed Batch 12 task G37. Extracted the lookbook scroll strip into a dedicated client component (`LookbookStrip.tsx`) featuring native scrollBy method buttons for seamless desktop navigation. Shifted the homepage hero image's focal point dynamically via `object-[center_25%]`. Lastly, enforced standard portrait-anchoring via `object-top` utilities across featured collection cards located on both the homepage and collections index.
-- [2026-02-22 04:56] Completed Batch 13 tasks (G38, G39, G40). Added an intelligent "You May Also Like" cross-sell strip rendering `<ProductCard>` dynamically on the product page. Refactored the Collection detail page into a sleek single full-bleed hero format applying fallback mechanisms safely. Implemented a globally available fixed `<BackToTop>` scroll button encapsulated cleanly inside `layout.tsx`.
+- **[2026-02-22]** Gemini: Completed Batch 1 and Batch 2 tasks (G1, G2, G3, G4).
+  - **G1:** Created gender migration script (`20260222000002_gender_column.sql`) and added new fields to `types.ts` (`unit_type`, `minimum_quantity`, `fabric_type`, `gender` to `Product`; `yards_ordered` to `OrderItem`).
+  - **G2:** Rebranded backend items from iby_closet to 315 Fabrics. Updated `orders/route.ts` prefix to `315-` and included `yards_ordered`. Rebranded `email.ts` templates. Added `unit_type` and `minimum_quantity` to `CartItem` in `cart-store.ts` and renamed key to `315fabrics-cart`. Renamed delivery options in `delivery/calculate/route.ts`. Updated `package.json` name to `315-fabrics`.
+  - **G3:** Created `seed_fabric_categories.js` script to seed 6 categories. Updated `sitemap.ts` and `robots.ts` to use `NEXT_PUBLIC_APP_URL` instead of hardcoded `iby-closet.com`.
+  - **G4:** Installed `xlsx` and `node-fetch`. Created `seed_from_instagram.js` to parse `IGPOSTS_USERS_3_15fabrics_100.xlsx` and insert non-video posts as draft products, generating slugs, default fields, downloading and re-uploading associated images to Cloudinary, and inserting into `product_images`.
 
-## ⚠ NEW TASKS — Batch 13 (2026-02-22)
-
-You have 3 new tasks: **G38, G39, G40**. Read `task.md` for full specs. Work order: **G38 → G39 → G40**.
-
-**Summary:**
-- **G38** — Related products strip on product detail page. Below the accordions, show up to 4 other active products from the same collection (or random active products if no collection match). Each as a `<ProductCard>`. Fetched server-side in `products/[slug]/page.tsx`.
-- **G39** — Collection detail page hero upgrade. If a cover image exists, show it full-bleed with gradient scrim + collection name overlaid. If no cover image, use `COLLECTION_FALLBACK` map (`rhythm-and-thread → post_22, back-in-the-90s → post_24, default → post_20`). Add release date badge and description below the name in the hero. File: `src/app/(site)/collections/[slug]/page.tsx`.
-- **G40** — "Back to top" floating button. `src/components/BackToTop.tsx` (`'use client'`). Fixed position `bottom-6 right-6`, circle, bg-black text-white, ChevronUp icon from lucide-react. Appears only when user has scrolled >400px (`useEffect` + `window.addEventListener('scroll', ...)`). Smooth scroll to top on click. Add to `src/app/(site)/layout.tsx`.
-
-**Context:**
-- `ProductCard` is at `src/components/ProductCard.tsx` — import and use it
-- The `COLLECTION_FALLBACK` map is the same pattern used in `page.tsx` — copy it
-- `collections/[slug]/page.tsx` already has `supabaseServer` and collection data — extend it
-- `(site)/layout.tsx` already imports Header, Footer, PostHogProvider — add `<BackToTop />` before `</body>`
-- After all 3 tasks, append to `GEMINI_DETAILED.md`
+### Batch 3 — Assigned 2026-02-22 | Done: 2026-02-22 10:06
+- **What I did:** 
+  - (G5) Renamed admin session cookie from `iby_admin_session` to `315fabrics_admin_session` across middleware, auth route, logout route, and dynamic API admin routes (collections, orders, products, stats, image upload). Updated `src/app/api/upload/image/route.ts` Cloudinary folder to `315fabrics/products`. Rebranded `AdminSidebar.tsx` and `login/page.tsx` from `iby_closet` to `315 Fabrics`. Fixed URL and text in abandoned cart recovery API to use environment variables and mention 315 Fabrics.
+  - (G6) Completely rewrote `src/app/(site)/faq/page.tsx` with new Q&A content regarding yardage, fabrics, returns, and updated metadata. Fixed the default track page format example from `IBY-2026-XXXXXX` to `315-2026-XXXXXX` in `src/app/(site)/track/page.tsx`.
+- **Why I approached it this way:** 
+  - Replaced using precise targeted multi-replace tool chunks to avoid breaking the surrounding component structure, keeping styling unchanged.
+- **Tricky parts:**
+  - In `faq/page.tsx`, adjusting the metadata inline alongside the structural FAQ array definitions. In abandoned-cart, handling the fallback `http://localhost:3000` for `NEXT_PUBLIC_APP_URL`.
+- **What Claude should verify:**
+  - Verify if any other admin session names or tracking URLs remain hardcoded (A grep for `iby_closet` and `iby_admin_session` was run, replacing all discovered instances).
 
 ---
 
-## ⚠ NEW TASK — Batch 12 (2026-02-22)
+## Notes for Future Batches
 
-You have 1 new task: **G37**. Read `task.md` for full spec.
-
-**Summary:** Three UI polish fixes — hero image crop on desktop, lookbook carousel arrows for desktop, collection card image top-anchoring. All in `src/app/(site)/page.tsx`, `src/app/(site)/collections/page.tsx`, and a new client component.
-
----
-
-## ⚠ NEW TASK — Batch 11 (2026-02-22)
-
-You have 1 new task: **G36**. Read `task.md` for full spec.
-
-**Summary:** Build `ProductImageGallery.tsx` (`'use client'`) for the product detail page. Clicking thumbnails changes the large displayed image. Replace the current static image block in `products/[slug]/page.tsx` with this component. Also fix the `export const dynamic` import-order bug in that file.
-
-**Key implementation notes:**
-- `useState` for `selectedIndex: number` (default 0)
-- Selected thumbnail: `ring-2 ring-black ring-offset-1`, others: `opacity-60 hover:opacity-100`
-- Only render thumbnail strip if `images.length > 1`
-- Empty fallback: centred `productName` white text on `bg-neutral-900`
-- `export const dynamic` in `products/[slug]/page.tsx` is between imports — move after all imports
-
----
-
-## ⚠ NEW TASKS — Batch 10 (2026-02-22)
-
-You have 2 new tasks: **G34, G35**. Read `task.md` for full specs. Work order: **G34 → G35**.
-
-**Summary:**
-- **G34** — Homepage (`src/app/(site)/page.tsx` + `src/app/globals.css`): Replace the gradient hero with a full-bleed photo (`/images/instagram/post_16.jpg`), add local image fallbacks for products and collections, add a horizontally-scrollable lookbook teaser strip (5 photos), add a brand teaser block (`product_100.jpg` + founder quote). Keep the editorial pillar strip added by G32.
-- **G35** — Collections index (`src/app/(site)/collections/page.tsx`): Add `COLLECTION_FALLBACK` map and always render an `<Image>` on collection cards (never a text placeholder).
-
-**Critical image list — only use filenames that exist:**
-- Editorial: `post_0, post_1, post_4, post_5, post_7, post_8, post_10, post_12, post_14, post_16, post_18, post_19, post_20, post_22, post_24` (all `.jpg`)
-- Product: `product_100–107, product_114, product_117, product_119, product_121–130, product_132, product_133` (all `.jpg`)
-- DO NOT reference: product_108–113, 115, 116, 118, 120, 131 (files don't exist — 404s)
-- All paths: `/images/instagram/[filename]` — no remotePatterns changes needed
-
-**Key constraints for G34:**
-- `products.map((product, i) => ...)` — must add index `i` for fallback array
-- For `fill` prop: parent must have `position: relative` + `overflow-hidden` — the existing parents already do
-- `scrollbar-hide` class goes in `globals.css` inside `@layer utilities`
-- `FadeIn`, `Image`, `Link` are all already imported in `page.tsx`
-- Do NOT undo the trust badges / pillar strip from G32
-
----
-
-## ⚡ Load Redistribution Notice — Read This
-
-Claude has redistributed work so Gemini carries ~70% of remaining tasks. Codex is finishing C27 (image upload UI) and C28 (shop filter) only. Gemini now also owns frontend tasks G29–G33.
-
-**Frontend tasks are now in scope for Gemini** — this is intentional. The same coding standards apply: TypeScript strict, Tailwind only, `'use client'` only when needed.
-
-**Batch 9 tasks for Gemini: G29, G30, G31, G32, G33** — all in `task.md`. Work top-to-bottom. G29 first (installs framer-motion which G32/G33 may use).
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 5 (2026-02-21)
-
-You have 2 new tasks: **G20, G21**. Read `task.md` for full specs. Work order: **G20 → G21**.
-
-**Summary:**
-- **G20** — Add a mobile hamburger menu to `src/components/Header.tsx`. The nav links are currently `hidden md:flex` — add a hamburger button visible only on mobile, opening a full-screen overlay menu (bg-black/95, white text) with all site links. Include close button, prevent body scroll when open.
-- **G21** — Create a reusable `<ProductCard>` component at `src/components/ProductCard.tsx`. Extract the duplicated product card code (image + name + price) from shop page, homepage, collection detail, and category filter pages into one shared component. Update all 4 pages to use it.
-
-**⚠ Claude audit notes from Batch 4 (G18-G19):**
-- `vitest.config.ts` had `environmentMatchGlobs` which caused a TypeScript error during `next build` because it's not in the `InlineConfig` type. Claude excluded `vitest.config.ts` from `tsconfig.json` to fix this.
-- All API logic from G18-G19 was correct.
-
-**⚠ Context for G20:**
-- The header already has `'use client'` and imports `useCartStore`.
-- New pages exist now that need to be in the mobile menu: `/brand`, `/lookbook`, `/size-guide`, `/faq`, `/contact`.
-- Keep the existing desktop nav unchanged.
-
-**⚠ Context for G21:**
-- The 4 files with duplicated card code: `src/app/(site)/shop/page.tsx`, `src/app/(site)/page.tsx`, `src/app/(site)/collections/[slug]/page.tsx`, `src/app/(site)/shop/[category-slug]/page.tsx`.
-- Each currently has inline JSX for the product grid card. Extract into `<ProductCard slug={...} name={...} price={...} imageUrl={...} />`.
-- Use Next.js `<Image>` with `fill` prop, `sizes` prop, and `object-cover`. Add hover scale effect.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 3 (2026-02-21)
-
-You have 2 new tasks: **G16, G17**. Read `task.md` for full specs. Work order: **G16 → G17**.
-
-**Summary:**
-- **G16** — Set up Upstash Redis caching. Create `src/lib/redis.ts` and `src/lib/cache.ts`. Wrap the shop page and homepage server-side fetches in `cachedFetch()` with 5-min TTL. The `@upstash/redis` package is already installed.
-- **G17** — Build email order confirmation via Resend. Create `src/lib/email.ts`, add `sendOrderConfirmation()` function. Call it from `POST /api/orders` (after order creation) and from `POST /api/paystack/webhook` (on `charge.success`). Wrap in try/catch so email failures don't break orders.
-
-**⚠ Claude audit notes from G13-G15:**
-- Waitlist route (G13) was inserting a `source` field that doesn't exist in the `waitlist` table — Claude removed it.
-- Logout route was calling `cookies.delete()` without specifying `path=/admin`, meaning the cookie (set with `path=/admin`) wouldn't actually get deleted — Claude fixed it to use `cookies.set()` with `maxAge: 0` and `path: '/admin'`.
-- Login page had unused imports (`supabaseBrowser`, `email`, `setEmail`) and an `any` type — Claude cleaned up.
-- AdminSidebar had unused `supabaseBrowser` import — Claude removed.
-- All other G13-G15 work was solid. The middleware, auth route, seed script, and cookie-based auth system are well implemented.
-
----
-
-## ⚠ PREVIOUS TASKS ASSIGNED — Batch 2 (2026-02-21)
-
-You have 3 pending tasks: **G13, G14, G15**. Read `task.md` for full specs. Work order: **G13 → G14 → G15**.
-
-**Summary:**
-- **G13** — `POST /api/waitlist` route (already in your queue, do this first — it's simple)
-- **G14** — Seed the "Rhythm & Thread" collection + link all active products to it + seed product variants (sizes). Write a Node.js script in `scripts/seed_collection_and_variants.js` and run it. See task.md for exact sizes per product type.
-- **G15** — Add cookie-based admin auth. `src/middleware.ts` (project root) checks for `iby_admin_session` cookie on `/admin/*` routes. New `POST /api/admin/auth` route sets the cookie on correct password. Update `src/app/admin/login/page.tsx` to wire the form to this route. Add logout button to admin layout.
-
-**⚠ Important context from Claude:**
-- The `scripts/` folder already has working examples (`scripts/fix_product_data.js`, `scripts/cleanup_products.js`) — follow the same `.env.local` loading pattern for G14.
-- There are currently **12 active products** in the DB (Axis Tank Top, Groove Vest, Iby Wave Cap, Kng Chunky Loafers, Knitted Wool Jacket, Retro Leather Jacket, Rhythm Suit Set, Stride Pant, Tempo Stripe Shirt, The Anchor Pant, The Flow Shirt, Zia Stripe Shirt). The seed script for G14 must handle these exactly.
-- Do NOT modify `src/app/admin/` layout or sidebar files — only add the logout button to the existing layout.
-- For G15 middleware: use `import { NextResponse } from 'next/server'` — the middleware file goes at `src/middleware.ts` (inside src/), NOT at the project root.
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 7 (2026-02-21)
-
-You have 3 new tasks: **G24, G25, G26**. Read `task.md` for full specs. Work order: **G24 → G25 → G26**.
-
-**Summary:**
-- **G24** — Add `generateMetadata()` to product and collection detail pages for SEO. Also add a default `metadata` export to the site layout. Use the same `cachedFetch` helper so metadata doesn't double-fetch from Supabase.
-- **G25** — Decrement stock in `product_variants` when an order is created (`POST /api/orders`). Floor at 0, don't fail the order if decrement errors. Only decrement when `variant_id` is non-null.
-- **G26** — Build `GET /api/admin/stats` route returning `{ totalRevenue, totalOrders, totalProducts, todayOrders, totalContacts }`. Auth: check `iby_admin_session` cookie. Used by the new admin dashboard page (Codex builds C25).
-
-**⚠ Claude audit notes from Batch 6 (G22-G23):**
-- G22 (admin order search) and G23 (abandoned cart recovery API) were both correctly implemented. Clean work.
-- `CODEX.md` got very bloated from duplicate task section appends — ignore the repetitive sections, only the Progress Log entries matter.
-- The 3 build errors from Batch 5/6 output were fixed by Claude: unused `Image` import in `shop/[category-slug]/page.tsx`, `cartData?: any` param in `email.ts`, wrong arg count in `abandoned-cart/recover/route.ts`.
-- `export const dynamic = 'force-dynamic'` import ordering was also fixed in `page.tsx` and `shop/page.tsx`.
-
----
-
-## ⚠ NEW TASKS ASSIGNED — Batch 6 (2026-02-21)
-
-You have 2 new tasks: **G22, G23**. Read `task.md` for full specs. Work order: **G22 → G23**.
-
-**Summary:**
-- **G22** — Add search bar and filter dropdowns to `/admin/orders/page.tsx`. Filters: order number, customer name, status, source. Update list in real time.
-- **G23** — Create `/api/abandoned-cart/recover` (POST). Body: `{ email?, whatsapp_number? }`. Send recovery link via Resend or Fonnte. Log attempt in `abandoned_carts` table.
+- The `product_variants` table's `size` column will always be `null` for 315 Fabrics — it's used only for colorways. Do not create size-based variants.
+- If building admin features, the admin session cookie is still `iby_admin_session` for now (rename scheduled for Batch 2).
+- The `collections` table is available but not a primary UX concept yet — fabric categories are the main navigation. Collections can be used for curated "asoebi sets for events" in future.

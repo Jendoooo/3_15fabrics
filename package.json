@@ -1,5 +1,5 @@
 {
-  "name": "iby_closet",
+  "name": "315-fabrics",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -35,9 +35,11 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "jsdom": "^28.1.0",
+    "node-fetch": "^3.3.2",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "xlsx": "^0.18.5"
   }
 }

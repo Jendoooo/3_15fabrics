@@ -4,7 +4,7 @@ import { sendOrderStatusUpdate } from '@/lib/email';
 
 // Auth check — same pattern as middleware
 function isAuthenticated(req: NextRequest): boolean {
-  const session = req.cookies.get('iby_admin_session')?.value;
+  const session = req.cookies.get('315fabrics_admin_session')?.value;
   return session === process.env.ADMIN_SESSION_SECRET;
 }
 
@@ -13,7 +13,7 @@ const WA_STATUS_MESSAGES: Record<string, string> = {
   confirmed: 'has been confirmed and is being prepared',
   processing: 'is being packed and prepared for shipment',
   shipped: '🚚 has been SHIPPED and is on its way to you',
-  delivered: '✅ has been DELIVERED. Thank you for shopping with iby_closet!',
+  delivered: '✅ has been DELIVERED. Thank you for shopping with 315 Fabrics!',
   cancelled: 'has been cancelled. Please contact us if you have questions.',
 };
 
@@ -79,9 +79,9 @@ export async function PATCH(
       const statusText = WA_STATUS_MESSAGES[status] ?? `has been updated to: ${status}`;
       const firstName = (order.customer_name ?? 'there').split(' ')[0];
       const message = [
-        `Hi ${firstName}! Your iby_closet order *${order.order_number}* ${statusText}.`,
+        `Hi ${firstName}! Your 315 Fabrics order *${order.order_number}* ${statusText}.`,
         note?.trim() ? `\n📝 Note: ${note.trim()}` : '',
-        `\nTrack your order: https://iby-closet.com/track?order=${order.order_number}`,
+        `\nTrack your order: ${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/track?order=${order.order_number}`,
       ].join('');
 
       notifications.push(

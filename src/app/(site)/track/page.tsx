@@ -168,7 +168,7 @@ function TrackOrderContent() {
         <div className="mx-auto max-w-xl text-center">
           <h1 className="mb-6 text-4xl font-light uppercase tracking-widest">Track Your Order</h1>
           <p className="mb-8 text-sm text-neutral-500">
-            Enter your order number above — format: IBY-2026-XXXXXX
+            Enter your order number above — format: 315-2026-XXXXXX
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">

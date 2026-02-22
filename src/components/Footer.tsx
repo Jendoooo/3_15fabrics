@@ -55,21 +55,15 @@ export default function Footer() {
     <footer className="bg-black px-6 py-16 text-white md:px-12">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 md:grid-cols-3">
         <div>
-          <h3 className="mb-6 text-xl tracking-widest font-light">iby_closet</h3>
+          <h3 className="mb-6 text-xl tracking-widest font-light">315 Fabrics</h3>
           <p className="mb-6 text-sm leading-relaxed text-neutral-400">
-            Lagos menswear. Designed by Ibrahim Hamed.
+            Premium fabrics, sourced from around the world. Based in Epe, Lagos.
           </p>
           <div className="flex gap-4">
-            <a href="https://instagram.com/iby_closet" target="_blank" rel="noreferrer" aria-label="Instagram" className="text-white hover:text-neutral-400 transition-colors">
+            <a href="https://instagram.com/3_15fabrics" target="_blank" rel="noreferrer" aria-label="Instagram" className="text-white hover:text-neutral-400 transition-colors">
               <Instagram size={18} />
             </a>
-            <a href="https://tiktok.com/@iby_closet" target="_blank" rel="noreferrer" aria-label="TikTok" className="text-white hover:text-neutral-400 transition-colors">
-              {/* TikTok icon — lucide doesn't include it, use a simple SVG */}
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/>
-              </svg>
-            </a>
-            <a href="https://wa.me/2349131410602" target="_blank" rel="noreferrer" aria-label="WhatsApp" className="text-white hover:text-neutral-400 transition-colors">
+            <a href="https://wa.me/2349066609177" target="_blank" rel="noreferrer" aria-label="WhatsApp" className="text-white hover:text-neutral-400 transition-colors">
               <MessageCircle size={18} />
             </a>
           </div>
@@ -85,13 +79,13 @@ export default function Footer() {
               <Link href="/collections" className="transition-colors hover:text-white">Collections</Link>
             </li>
             <li>
-              <Link href="/brand" className="transition-colors hover:text-white">Brand</Link>
+              <Link href="/brand" className="transition-colors hover:text-white">About Us</Link>
             </li>
             <li>
               <Link href="/lookbook" className="transition-colors hover:text-white">Lookbook</Link>
             </li>
             <li>
-              <Link href="/size-guide" className="transition-colors hover:text-white">Size Guide</Link>
+              <Link href="/yardage-guide" className="transition-colors hover:text-white">Yardage Guide</Link>
             </li>
           </ul>
         </div>
@@ -116,7 +110,7 @@ export default function Footer() {
         <div className="max-w-md">
           <h4 className="mb-6 text-sm uppercase tracking-widest">Join the Waitlist</h4>
           <p className="mb-4 text-sm text-neutral-400">
-            Subscribe for drop announcements and exclusive access.
+            New fabrics, asoebi sets, and exclusive offers — straight to your inbox.
           </p>
           <form onSubmit={handleSubmit} className="flex gap-2">
             <input
@@ -142,11 +136,8 @@ export default function Footer() {
         </div>
       </div>
       <div className="mx-auto mt-16 flex max-w-7xl items-center justify-between border-t border-white/10 pt-8 text-xs text-neutral-500">
-        <p>© {new Date().getFullYear()} iby_closet. All rights reserved.</p>
-        <div className="flex flex-col items-end gap-0.5 text-right">
-          <p>Made in Lagos</p>
-          <p className="text-neutral-600">Site by Mobo Digital</p>
-        </div>
+        <p>© {new Date().getFullYear()} 315 Fabrics. All rights reserved.</p>
+        <p>Epe, Lagos</p>
       </div>
     </footer>
   );

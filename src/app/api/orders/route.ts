@@ -9,9 +9,10 @@ type CartItem = {
     color: string | null;
     quantity: number;
     unit_price: number;
+    yards_ordered?: number;
 };
 
-// Generate non-guessable order number: IBY-YYYY-XXXXXX
+// Generate non-guessable order number: 315-YYYY-XXXXXX
 // Uses random alphanumeric (no ambiguous chars like 0/O, 1/I)
 function generateRandomCode(length: number): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -23,7 +24,7 @@ async function generateOrderNumber(): Promise<string> {
 
     for (let attempt = 0; attempt < 5; attempt++) {
         const code = generateRandomCode(6);
-        const orderNumber = `IBY-${year}-${code}`;
+        const orderNumber = `315-${year}-${code}`;
 
         const { data } = await supabaseServer
             .from('orders')
@@ -35,7 +36,7 @@ async function generateOrderNumber(): Promise<string> {
     }
 
     // Fallback: timestamp-based (virtually no collision risk)
-    return `IBY-${year}-${Date.now().toString(36).toUpperCase().slice(-6)}`;
+    return `315-${year}-${Date.now().toString(36).toUpperCase().slice(-6)}`;
 }
 
 export async function POST(request: Request) {
@@ -93,7 +94,8 @@ export async function POST(request: Request) {
             size: item.size,
             color: item.color,
             quantity: item.quantity,
-            unit_price: item.unit_price
+            unit_price: item.unit_price,
+            yards_ordered: item.yards_ordered ?? item.quantity
         }));
 
         const { error: itemsError } = await supabaseServer

@@ -25,7 +25,7 @@ export default function AdminSidebar() {
       {/* Desktop sidebar */}
       <aside className="hidden w-52 flex-shrink-0 flex-col border-r border-neutral-200 bg-white md:flex">
         <div className="flex h-14 items-center border-b border-neutral-200 px-5">
-          <span className="text-xs font-semibold uppercase tracking-widest">iby_closet</span>
+          <span className="text-xs font-semibold uppercase tracking-widest">315 Fabrics</span>
           <span className="ml-1.5 text-[10px] uppercase tracking-widest text-neutral-400">Admin</span>
         </div>
         <nav className="flex-1 py-2">
@@ -34,8 +34,8 @@ export default function AdminSidebar() {
               key={href}
               href={href}
               className={`flex items-center gap-3 px-5 py-3 text-sm transition-colors ${pathname.startsWith(href)
-                  ? 'bg-black text-white'
-                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-black'
+                ? 'bg-black text-white'
+                : 'text-neutral-600 hover:bg-neutral-100 hover:text-black'
                 }`}
             >
               <Icon size={15} />

@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 import { supabaseServer } from '@/lib/supabase';
 import type { Collection, Product } from '@/lib/types';
 
-const BASE_URL = 'https://iby-closet.com';
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
 type SitemapProduct = Pick<Product, 'slug' | 'created_at'>;
 type SitemapCollection = Pick<Collection, 'slug' | 'created_at'>;
@@ -71,24 +71,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const productRoutes: MetadataRoute.Sitemap = productsError
     ? []
     : ((productsData ?? []) as SitemapProductWithUpdatedAt[])
-        .filter((product) => Boolean(product.slug))
-        .map((product) => ({
-          url: `${BASE_URL}/products/${product.slug}`,
-          lastModified: toDate(product.updated_at ?? product.created_at),
-          changeFrequency: 'daily',
-          priority: 0.9,
-        }));
+      .filter((product) => Boolean(product.slug))
+      .map((product) => ({
+        url: `${BASE_URL}/products/${product.slug}`,
+        lastModified: toDate(product.updated_at ?? product.created_at),
+        changeFrequency: 'daily',
+        priority: 0.9,
+      }));
 
   const collectionRoutes: MetadataRoute.Sitemap = collectionsError
     ? []
     : ((collectionsData ?? []) as SitemapCollectionWithUpdatedAt[])
-        .filter((collection) => Boolean(collection.slug))
-        .map((collection) => ({
-          url: `${BASE_URL}/collections/${collection.slug}`,
-          lastModified: toDate(collection.updated_at ?? collection.created_at),
-          changeFrequency: 'weekly',
-          priority: 0.8,
-        }));
+      .filter((collection) => Boolean(collection.slug))
+      .map((collection) => ({
+        url: `${BASE_URL}/collections/${collection.slug}`,
+        lastModified: toDate(collection.updated_at ?? collection.created_at),
+        changeFrequency: 'weekly',
+        priority: 0.8,
+      }));
 
   return [...staticRoutes, ...productRoutes, ...collectionRoutes];
 }

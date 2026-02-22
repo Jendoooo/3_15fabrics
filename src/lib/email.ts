@@ -47,12 +47,12 @@ export async function sendOrderConfirmation(
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; line-height: 1.6;">
       <div style="text-align: center; padding: 30px 0; background-color: #000000;">
-        <h1 style="color: #ffffff; margin: 0; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; font-size: 24px;">iby_closet</h1>
+        <h1 style="color: #ffffff; margin: 0; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; font-size: 24px;">315fabrics</h1>
       </div>
       
       <div style="padding: 40px 20px;">
         <h2 style="margin-top: 0; font-weight: 300; text-transform: uppercase;">Order Confirmed</h2>
-        <p>Thank you for shopping with iby_closet. Your order <strong>${orderNumber}</strong> has been received and is currently being processed.</p>
+        <p>Thank you for shopping with 315 Fabrics. Your order <strong>${orderNumber}</strong> has been received and is currently being processed.</p>
         
         <div style="margin: 40px 0;">
           <h3 style="font-weight: 300; text-transform: uppercase; border-bottom: 1px solid #000000; padding-bottom: 10px;">Order Details</h3>
@@ -83,16 +83,16 @@ export async function sendOrderConfirmation(
 
       <div style="text-align: center; padding: 30px 20px; font-size: 12px; color: #999999; border-top: 1px solid #eeeeee;">
         <p>Need help? Reply to this email or contact us on WhatsApp.</p>
-        <p>&copy; ${new Date().getFullYear()} iby_closet. All rights reserved.</p>
+        <p>&copy; ${new Date().getFullYear()} 315 Fabrics. All rights reserved.</p>
       </div>
     </div>
   `;
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'iby_closet <onboarding@resend.dev>', // TODO: change to orders@iby-closet.com once domain verified in Resend dashboard
+      from: '315 Fabrics <onboarding@resend.dev>', // TODO: change to orders@315fabrics.com once domain verified in Resend dashboard
       to: [to],
-      subject: `iby_closet — Order ${orderNumber} Confirmed`,
+      subject: `315 Fabrics — Order ${orderNumber} Confirmed`,
       html: html,
     });
 
@@ -110,7 +110,7 @@ const STATUS_MESSAGES: Record<string, string> = {
   confirmed: 'Your order has been confirmed and is being prepared.',
   processing: 'Your order is currently being packed and prepared for shipment.',
   shipped: 'Great news! Your order has been shipped and is on its way to you.',
-  delivered: 'Your order has been delivered. Thank you for shopping with iby_closet!',
+  delivered: 'Your order has been delivered. Thank you for shopping with 315 Fabrics!',
   cancelled: 'Your order has been cancelled. Please contact us if you have any questions.',
 };
 
@@ -131,11 +131,11 @@ export async function sendOrderStatusUpdate(
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; line-height: 1.6;">
       <div style="text-align: center; padding: 30px 0; background-color: #000000;">
-        <h1 style="color: #ffffff; margin: 0; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; font-size: 24px;">iby_closet</h1>
+        <h1 style="color: #ffffff; margin: 0; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; font-size: 24px;">315fabrics</h1>
       </div>
       <div style="padding: 40px 20px;">
         <h2 style="margin-top: 0; font-weight: 300; text-transform: uppercase;">Order ${statusLabel}</h2>
-        <p>Your iby_closet order <strong>${orderNumber}</strong> has been updated.</p>
+        <p>Your 315 Fabrics order <strong>${orderNumber}</strong> has been updated.</p>
         <p>${statusMessage}</p>
         ${note ? `<div style="background: #f5f5f5; padding: 16px; margin: 20px 0; border-left: 3px solid #000;"><p style="margin: 0; font-size: 14px;"><strong>Update from us:</strong> ${note}</p></div>` : ''}
         <div style="text-align: center; margin-top: 40px;">
@@ -144,16 +144,16 @@ export async function sendOrderStatusUpdate(
       </div>
       <div style="text-align: center; padding: 30px 20px; font-size: 12px; color: #999999; border-top: 1px solid #eeeeee;">
         <p>Need help? Contact us on WhatsApp or reply to this email.</p>
-        <p>&copy; ${new Date().getFullYear()} iby_closet. All rights reserved.</p>
+        <p>&copy; ${new Date().getFullYear()} 315 Fabrics. All rights reserved.</p>
       </div>
     </div>
   `;
 
   try {
     const { error } = await resend.emails.send({
-      from: 'iby_closet <onboarding@resend.dev>', // TODO: change once iby-closet.com verified in Resend
+      from: '315 Fabrics <onboarding@resend.dev>', // TODO: change once 315fabrics.com verified in Resend
       to: [to],
-      subject: `iby_closet — Order ${orderNumber} ${statusLabel}`,
+      subject: `315 Fabrics — Order ${orderNumber} ${statusLabel}`,
       html,
     });
     if (error) console.error('[Resend] Status update email failed:', error);
@@ -171,7 +171,7 @@ export async function sendAbandonedCartRecovery(to: string) {
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; line-height: 1.6;">
       <div style="text-align: center; padding: 30px 0; background-color: #000000;">
-        <h1 style="color: #ffffff; margin: 0; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; font-size: 24px;">iby_closet</h1>
+        <h1 style="color: #ffffff; margin: 0; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; font-size: 24px;">315fabrics</h1>
       </div>
       
       <div style="padding: 40px 20px;">
@@ -184,16 +184,16 @@ export async function sendAbandonedCartRecovery(to: string) {
       </div>
       
       <div style="text-align: center; padding: 30px 20px; font-size: 12px; color: #999999; border-top: 1px solid #eeeeee;">
-        <p>&copy; ${new Date().getFullYear()} iby_closet. All rights reserved.</p>
+        <p>&copy; ${new Date().getFullYear()} 315 Fabrics. All rights reserved.</p>
       </div>
     </div>
   `;
 
   try {
     const { error } = await resend.emails.send({
-      from: 'iby_closet <onboarding@resend.dev>', // TODO: change once iby-closet.com verified in Resend
+      from: '315 Fabrics <onboarding@resend.dev>', // TODO: change once 315fabrics.com verified in Resend
       to: [to],
-      subject: `Did you forget something? — iby_closet`,
+      subject: `Did you forget something? — 315 Fabrics`,
       html: html,
     });
 

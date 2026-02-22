@@ -2,85 +2,85 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'FAQ — iby_closet',
-  description: 'Frequently asked questions about orders, shipping, sizing, returns, and payments at iby_closet.',
+  title: 'FAQ',
+  description: 'Frequently asked questions about orders, shipping, sizing, returns, and payments at 315 Fabrics.',
 };
 
 const faqs = [
   {
-    category: 'Orders & Shipping',
+    category: 'Ordering & Yards',
     items: [
       {
+        q: 'How do I know how many yards I need?',
+        a: 'Check our [Yardage Guide](/yardage-guide) for a breakdown by outfit type. When in doubt, add an extra half yard.',
+      },
+      {
+        q: 'What is the minimum order?',
+        a: 'Each product listing shows the minimum. Most fabrics start at 5 yards.',
+      },
+      {
+        q: 'Can I order a custom amount of yards?',
+        a: 'Yes, for yard-type products you choose how many yards you need (subject to stock).',
+      },
+      {
+        q: 'What does \'bundle\' mean?',
+        a: 'A bundle is a fixed set of yards sold as one complete unit — perfect for a single outfit.',
+      },
+    ],
+  },
+  {
+    category: 'Fabric Types',
+    items: [
+      {
+        q: 'What types of fabric do you sell?',
+        a: 'We carry Ankara, French Lace, Swiss Voile, Aso-Oke, Senator, and Cotton. New arrivals drop regularly.',
+      },
+      {
+        q: 'Do you do asoebi group orders?',
+        a: 'Yes! WhatsApp us at +234 906 660 9177 for bulk pricing for events and wedding groups.',
+      },
+    ],
+  },
+  {
+    category: 'Payment',
+    items: [
+      {
+        q: 'How do I pay?',
+        a: 'Online via card or bank transfer through Paystack (secure). You can also place orders via WhatsApp and pay by bank transfer.',
+      },
+      {
+        q: 'Is payment secure?',
+        a: 'Yes — all online payments are processed by Paystack, a trusted Nigerian payment gateway.',
+      },
+    ],
+  },
+  {
+    category: 'Delivery',
+    items: [
+      {
+        q: 'Do you deliver nationwide?',
+        a: 'Yes, we deliver across Nigeria.',
+      },
+      {
         q: 'How long does delivery take?',
-        a: 'Within Lagos: 2–5 days via GIG Logistics or dispatch rider. Outside Lagos: 5–10 days. International orders: 10–21 days depending on destination.',
+        a: 'Lagos: 2–5 working days. Outside Lagos: 3–7 working days.',
       },
       {
         q: 'How much is delivery?',
-        a: 'Delivery fees are calculated at checkout based on your location. We optimize for the most reliable delivery standard.',
-      },
-      {
-        q: 'Can I track my order?',
-        a: 'Yes! Use your order number (format: IBY-XXXXXXXX) on our Track Order page. No account needed — just enter your order number.',
-      },
-      {
-        q: 'Do you ship internationally?',
-        a: 'Yes, we ship to select countries. International shipping options and fees are calculated at checkout based on your delivery address.',
-      },
-      {
-        q: 'Can I pick up my order in Lagos?',
-        a: 'Yes. We have a physical space in Lagos for walk-in pickups. Choose "Pick Up" at checkout or DM us for the address and available times.',
+        a: 'Delivery fee is calculated at checkout based on your location.',
       },
     ],
   },
   {
-    category: 'Sizing & Fit',
+    category: 'Returns & Quality',
     items: [
       {
-        q: 'How do I find my size?',
-        a: 'Check our Size Guide for detailed measurements. If you\'re between sizes, we recommend sizing up for a relaxed fit. You can also DM us on Instagram or WhatsApp with your height and weight for a personalized recommendation.',
+        q: 'What if my fabric is faulty?',
+        a: 'Contact us within 48 hours of receiving your order. WhatsApp +234 906 660 9177 with photos and your order number.',
       },
       {
-        q: 'Do your clothes run true to size?',
-        a: 'Our pieces generally run true to size. Some collections may have a more relaxed or tailored cut — check individual product pages for specific fit notes.',
-      },
-    ],
-  },
-  {
-    category: 'Payments',
-    items: [
-      {
-        q: 'What payment methods do you accept?',
-        a: 'We accept secure online payments via Paystack (card/transfer). For our physical space, we accept direct bank transfer and cash/POS at walk-in.',
-      },
-      {
-        q: 'Is online payment secure?',
-        a: 'Absolutely. All online payments are processed by Paystack, which is PCI DSS compliant. We never see or store your card details.',
-      },
-    ],
-  },
-  {
-    category: 'Returns & Exchanges',
-    items: [
-      {
-        q: 'What is your return policy?',
-        a: 'We offer exchanges only within 7 days of delivery. Items must be unworn with tags attached. We do not offer refunds.',
-      },
-    ],
-  },
-  {
-    category: 'General',
-    items: [
-      {
-        q: 'Do you restock sold-out items?',
-        a: 'Some items from past collections may be restocked, but we primarily release limited drops. Use the "Notify Me" button on sold-out products to be alerted if they return.',
-      },
-      {
-        q: 'Can I order through Instagram or WhatsApp?',
-        a: 'Yes! DM us on Instagram (@iby_closet) or message us directly on WhatsApp at +234 913 141 0602. Just tell us what you want, your size, and your delivery location — we\'ll send a payment link and handle everything from there.',
-      },
-      {
-        q: 'Do you do custom or made-to-order pieces?',
-        a: 'Currently we focus on our collection drops. However, reach out via WhatsApp (+234 913 141 0602) and we can discuss possibilities.',
+        q: 'Are your fabrics authentic?',
+        a: 'Yes — all fabrics are sourced directly from trusted suppliers. We don\'t sell substandard goods.',
       },
     ],
   },

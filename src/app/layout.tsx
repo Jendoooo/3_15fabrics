@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'iby_closet',
-  description: "A Lagos-based men's fashion brand.",
+  title: '315 Fabrics',
+  description: 'Premium asoebi fabrics — Ankara, French Lace, Swiss Voile, Aso-Oke, Senator and more. Based in Epe, Lagos. Shop online.',
   icons: {
     icon: '/logo-black.png',
     shortcut: '/logo-black.png',

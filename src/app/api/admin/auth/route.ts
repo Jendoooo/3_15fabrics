@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
             const response = NextResponse.json({ success: true }, { status: 200 });
 
             response.cookies.set({
-                name: 'iby_admin_session',
+                name: '315fabrics_admin_session',
                 value: sessionSecret,
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',

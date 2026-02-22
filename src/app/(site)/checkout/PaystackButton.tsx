@@ -26,7 +26,7 @@ export default function PaystackButton({
   const isDisabled = disabled || isLoadingAmount;
 
   const config = {
-    reference: `IBY-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+    reference: `315-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
     email,
     amount: amount * 100, // Paystack uses kobo
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? '',
