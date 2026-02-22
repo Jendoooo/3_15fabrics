@@ -10,6 +10,8 @@ type AdminStats = {
   totalRevenue: number;
   totalOrders: number;
   totalProducts: number;
+  thisMonthOrders: number;
+  pendingOrders: number;
   todayOrders: number;
 };
 
@@ -22,6 +24,8 @@ const DEFAULT_STATS: AdminStats = {
   totalRevenue: 0,
   totalOrders: 0,
   totalProducts: 0,
+  thisMonthOrders: 0,
+  pendingOrders: 0,
   todayOrders: 0,
 };
 
@@ -82,6 +86,8 @@ export default function AdminPage() {
           totalRevenue: parseNumber(payload.totalRevenue),
           totalOrders: parseNumber(payload.totalOrders),
           totalProducts: parseNumber(payload.totalProducts),
+          thisMonthOrders: parseNumber(payload.thisMonthOrders),
+          pendingOrders: parseNumber(payload.pendingOrders),
           todayOrders: parseNumber(payload.todayOrders),
         });
       } else {
@@ -114,10 +120,10 @@ export default function AdminPage() {
 
   const statCards = useMemo(
     () => [
-      { label: 'Total Revenue', value: formatNaira(stats.totalRevenue) },
-      { label: 'Total Orders', value: stats.totalOrders.toLocaleString('en-NG') },
-      { label: 'Active Products', value: stats.totalProducts.toLocaleString('en-NG') },
-      { label: 'New Today', value: stats.todayOrders.toLocaleString('en-NG') },
+      { label: 'Total Products', value: stats.totalProducts.toLocaleString('en-NG') },
+      { label: 'Orders This Month', value: stats.thisMonthOrders.toLocaleString('en-NG') },
+      { label: 'Revenue', value: formatNaira(stats.totalRevenue) },
+      { label: 'Pending Orders', value: stats.pendingOrders.toLocaleString('en-NG') },
     ],
     [stats]
   );

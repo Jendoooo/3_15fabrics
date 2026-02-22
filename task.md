@@ -493,12 +493,12 @@
 
 > Context: 20% of work — admin-facing features.
 
-- [ ] **C16:** Admin products — inline price editor. Each row gets editable price input that saves on blur via PATCH.
+- [x] **C16:** Admin products — inline price editor. Each row gets editable price input that saves on blur via PATCH. | Done: 2026-02-22 12:20
 
-- [ ] **C17:** Checkout success page — warm brand styling. bg-brand-cream, font-display heading, text-brand-forest order number.
+- [x] **C17:** Checkout success page — warm brand styling. bg-brand-cream, font-display heading, text-brand-forest order number. | Done: 2026-02-22 12:20
 
-- [ ] **C18:** Admin dashboard — summary cards (total products, orders this month, revenue, pending orders).
+- [x] **C18:** Admin dashboard — summary cards (total products, orders this month, revenue, pending orders). | Done: 2026-02-22 12:20
 
-- [ ] **C19:** Admin orders — WhatsApp notification sent badge.
+- [x] **C19:** Admin orders — WhatsApp notification sent badge. | Done: 2026-02-22 12:20
 
 - [x] **G34:** Enforce minimum_quantity on product page and cart. The input for yards should not allow going below the minimum_quantity defined for the product.

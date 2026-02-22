@@ -452,6 +452,30 @@ export default function YardageGuidePage() { ... }
 - **Tricky parts:** Avoiding side effects on hover animation and card aspect ratio while replacing the fallback state copy/design.
 - **What Claude should verify:** Confirm no-image cards retain identical sizing/spacing to imaged cards and validate header/footer contrast with the new palette.
 
+### [C16] - Admin products inline price editor | Done: 2026-02-22 12:20
+- **What I did:** Added inline per-row price editing in `src/app/admin/products/page.tsx` with a numeric input, local input state, on-blur save to `PATCH /api/admin/products/[id]`, Enter-to-blur support, per-row saving disable state, and inline success/error feedback. Kept existing edit/delete actions and product list structure intact.
+- **Why I approached it this way:** The requirement explicitly asked for blur-triggered PATCH saves, so I used lightweight client state in the existing client component instead of introducing a new route or server action.
+- **Tricky parts:** Avoided accidental writes on unchanged values, normalized invalid input handling (revert + error), and synchronized local displayed price with canonical product state after successful PATCH.
+- **What Claude should verify:** Blur behavior on desktop/mobile (tap-away), per-row feedback visibility, and that updated price appears immediately without page refresh.
+
+### [C17] - Checkout success warm brand styling | Done: 2026-02-22 12:20
+- **What I did:** Restyled `src/app/(site)/checkout/success/page.tsx` to warm brand tokens: `bg-brand-cream` page, display-font heading, forest-green order number, branded bordered container, and forest-toned CTA buttons while preserving existing order-number lookup and cart-clear logic.
+- **Why I approached it this way:** I limited changes to classes and presentation so behavior remains identical while satisfying the requested brand treatment.
+- **Tricky parts:** Preserved readability/contrast with layered cream/white surfaces and kept responsive spacing unchanged.
+- **What Claude should verify:** Check final visual hierarchy/contrast on small screens and confirm link targets/clear-cart behavior still match prior flow.
+
+### [C18] - Admin dashboard summary cards | Done: 2026-02-22 12:20
+- **What I did:** Updated `src/app/api/admin/stats/route.ts` to include `thisMonthOrders` and `pendingOrders`, and adjusted `src/app/admin/page.tsx` card model/UI to show the requested set: total products, orders this month, revenue, pending orders.
+- **Why I approached it this way:** The dashboard was already powered by a dedicated stats endpoint, so extending that payload kept the client page simple and avoided additional dashboard-side querying complexity.
+- **Tricky parts:** Ensured month counting is deterministic via a UTC month-start boundary and kept backward-compatible keys in the response payload.
+- **What Claude should verify:** Confirm counts align with Supabase data (especially month boundary and pending status) and card labels/order match product-owner expectations.
+
+### [C19] - Admin orders WhatsApp sent badge | Done: 2026-02-22 12:20
+- **What I did:** Added WhatsApp sent badge rendering in `src/app/admin/orders/page.tsx`. For currently loaded orders, the page now queries `delivery_tracking` for admin-driven status updates (`confirmed/processing/shipped/delivered/cancelled`) and marks rows with customer WhatsApp numbers as `WA Sent`.
+- **Why I approached it this way:** There is no persisted `whatsapp_notified` field on `orders`, so deriving from admin tracking updates is the least invasive signal available without schema changes.
+- **Tricky parts:** Kept filtering performant by scoping the tracking query to visible order IDs and avoided badge rendering for orders that do not have a WhatsApp contact.
+- **What Claude should verify:** Badge accuracy on orders that received admin status updates and behavior when switching source/status filters.
+
 ---
 
 ### [C10] - Replace Application Logo | Done: 2026-02-22 10:28

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { supabaseBrowser } from '@/lib/supabase';
-import type { Order } from '@/lib/types';
+import type { DeliveryTracking, Order } from '@/lib/types';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -24,6 +24,9 @@ const SOURCE_COLORS: Record<string, string> = {
 
 const SOURCES = ['all', 'website', 'instagram', 'whatsapp', 'walk_in'];
 const STATUSES = ['all', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+const WA_NOTIFIED_STATUSES = ['confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+
+type WhatsAppTrackingRow = Pick<DeliveryTracking, 'order_id' | 'status' | 'updated_by'>;
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -31,6 +34,7 @@ export default function AdminOrdersPage() {
   const [sourceFilter, setSourceFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [whatsAppSentByOrderId, setWhatsAppSentByOrderId] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -44,7 +48,35 @@ export default function AdminOrdersPage() {
       if (statusFilter !== 'all') query = query.eq('status', statusFilter);
 
       const { data } = await query;
-      setOrders((data ?? []) as Order[]);
+      const nextOrders = (data ?? []) as Order[];
+      setOrders(nextOrders);
+
+      if (nextOrders.length === 0) {
+        setWhatsAppSentByOrderId({});
+        setLoading(false);
+        return;
+      }
+
+      const orderIds = nextOrders.map((order) => order.id);
+      const { data: trackingRows } = await supabaseBrowser
+        .from('delivery_tracking')
+        .select('order_id, status, updated_by')
+        .in('order_id', orderIds)
+        .eq('updated_by', 'admin')
+        .in('status', WA_NOTIFIED_STATUSES);
+
+      const sentMap = orderIds.reduce<Record<string, boolean>>((acc, orderId) => {
+        acc[orderId] = false;
+        return acc;
+      }, {});
+
+      ((trackingRows ?? []) as WhatsAppTrackingRow[]).forEach((row) => {
+        if (row.order_id) {
+          sentMap[row.order_id] = true;
+        }
+      });
+
+      setWhatsAppSentByOrderId(sentMap);
       setLoading(false);
     };
 
@@ -138,6 +170,11 @@ export default function AdminOrdersPage() {
                   <span className={`px-2 py-0.5 text-[10px] uppercase tracking-widest rounded-sm ${SOURCE_COLORS[order.source] ?? 'bg-neutral-100 text-neutral-600'}`}>
                     {order.source?.replace('_', ' ')}
                   </span>
+                  {order.customer_whatsapp && whatsAppSentByOrderId[order.id] ? (
+                    <span className="rounded-sm bg-emerald-100 px-2 py-0.5 text-[10px] uppercase tracking-widest text-emerald-700">
+                      WA Sent
+                    </span>
+                  ) : null}
                 </div>
                 <p className="mt-1 text-sm text-neutral-600">{order.customer_name ?? 'Unknown'}</p>
               </div>

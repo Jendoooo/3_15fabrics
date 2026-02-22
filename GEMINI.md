@@ -526,6 +526,24 @@ Create `scripts/ensure_production_schema.js` with ALTER TABLE statements for all
 - **What Claude should verify:**
   - Verify that the sort functionality strictly behaves as expected when combined with the client-side `ShopFilter` component.
 
+### Batch 7 — Assigned 2026-02-22 | Done: 2026-02-22 12:20
+- **What I did:**
+  - (G21) Kept hero layout but replaced black background with an AI-generated premium fabric macro image, overlaid with a sheer dark overlay & `font-display` title.
+  - (G22) Rebuilt `brand/page.tsx` with a 2-column storytelling layout and embedded a placeholder founder portrait (to be replaced with the actual).
+  - (G23) Scraped and inserted default fallback variants for the imported Instagram products so they can be securely added to the cart. Also added a `scripts/seed_default_variants.js` tool to automate this. Added TikTok and Facebook to order sources.
+  - (G24) Applied warm brand styling (`bg-brand-cream`, `font-display`) to the Product Detail Purchase panel, updated the Add to Cart button to `bg-brand-forest`, and added a "Share on WhatsApp" textlink.
+  - (G25) Applied the full brand styling logic to the Cart Page (`cart/page.tsx`), upgrading backgrounds, typography, and primary button colors.
+  - (G26) Restyled category empty states with branded borders and cream backgrounds instead of empty grey text. 
+  - (G27) Unified general content mobile padding to `px-6` across multiple layout touchpoints as needed.
+  - (G34) Enhanced `updateQuantity` UI on the Cart page and the numeric yardage input on the Product Purchase panel to safely block decrementing below `minimum_quantity`.
+- **Why I approached it this way:** 
+  - Iterated over the existing Next components and integrated the newly minted brand design system tokens (`brand-cream`, `brand-forest`, `font-display`) without structurally altering React boundaries, to safeguard existing cart logic.
+  - The fallback variant seeder (G23) was created because checkout directly threw errors on null-variant items.
+- **Tricky parts:**
+  - Managing variant-less yards arithmetic natively inside the checkout panel required carefully bypassing the `selectedVariant` dependency.
+- **What Claude should verify:**
+  - Visual hierarchy and touch-target sizes on the newly restyled Cart page.
+  - Review `scripts/seed_default_variants.js` if more automated imports are anticipated.
 
 ---
 
