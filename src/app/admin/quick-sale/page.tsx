@@ -112,7 +112,7 @@ export default function QuickSalePage() {
             customer_phone: null,
             customer_whatsapp: null,
             delivery_address: { street: 'Store Pickup', city: 'Store', state: 'Lagos' },
-            items: cart,
+            items: cart.map(item => ({ ...item, yards_ordered: item.quantity })),
             delivery_fee: 0,
             payment_method: paymentMethod,
             source: 'walk_in'
@@ -191,8 +191,8 @@ export default function QuickSalePage() {
                                         onClick={() => addVariantToCart(v)}
                                         disabled={v.stock_quantity <= 0}
                                         className={`p-4 border text-center transition-colors ${v.stock_quantity > 0
-                                                ? 'border-neutral-300 bg-white hover:border-black hover:bg-black hover:text-white'
-                                                : 'border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                                            ? 'border-neutral-300 bg-white hover:border-black hover:bg-black hover:text-white'
+                                            : 'border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed'
                                             }`}
                                     >
                                         <span className="block font-medium text-sm">{v.size || 'STD'}</span>

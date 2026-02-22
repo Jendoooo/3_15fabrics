@@ -10,7 +10,9 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 interface OrderItem {
   name: string;
   size: string | null;
+  color?: string | null;
   qty: number;
+  yards_ordered?: number;
   price: number;
 }
 
@@ -35,7 +37,7 @@ export async function sendOrderConfirmation(
     <tr>
       <td style="padding: 12px; border-bottom: 1px solid #eeeeee;">
         <strong>${item.name}</strong><br/>
-        <span style="color: #666666; font-size: 12px;">Size: ${item.size || 'N/A'}</span>
+        <span style="color: #666666; font-size: 12px;">${item.yards_ordered ?? item.qty} yards &mdash; ${item.color || 'Standard'}</span>
       </td>
       <td style="padding: 12px; border-bottom: 1px solid #eeeeee; text-align: center;">${item.qty}</td>
       <td style="padding: 12px; border-bottom: 1px solid #eeeeee; text-align: right;">${formatNairaHTML(item.price)}</td>
@@ -92,7 +94,7 @@ export async function sendOrderConfirmation(
     const { data, error } = await resend.emails.send({
       from: '315 Fabrics <onboarding@resend.dev>', // TODO: change to orders@315fabrics.com once domain verified in Resend dashboard
       to: [to],
-      subject: `315 Fabrics — Order ${orderNumber} Confirmed`,
+      subject: `Your 315 Fabrics order ${orderNumber} is confirmed — we'll be in touch shortly`,
       html: html,
     });
 

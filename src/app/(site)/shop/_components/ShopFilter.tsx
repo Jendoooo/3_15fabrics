@@ -22,6 +22,7 @@ type ShopCategory = {
 type ShopFilterProps = {
   products: ShopProduct[];
   categories: ShopCategory[];
+  sort?: string;
 };
 
 export default function ShopFilter({ products, categories }: ShopFilterProps) {
@@ -56,11 +57,10 @@ export default function ShopFilter({ products, categories }: ShopFilterProps) {
           <button
             type="button"
             onClick={() => setSelectedCategory(null)}
-            className={`px-3 py-1.5 text-xs uppercase tracking-widest transition-colors ${
-              selectedCategory === null
+            className={`px-3 py-1.5 text-xs uppercase tracking-widest transition-colors ${selectedCategory === null
                 ? 'bg-black text-white'
                 : 'border border-neutral-200 text-neutral-600 hover:border-black hover:text-black'
-            }`}
+              }`}
           >
             All
           </button>
@@ -70,11 +70,10 @@ export default function ShopFilter({ products, categories }: ShopFilterProps) {
               key={category.id}
               type="button"
               onClick={() => setSelectedCategory(category.id)}
-              className={`px-3 py-1.5 text-xs uppercase tracking-widest transition-colors ${
-                selectedCategory === category.id
+              className={`px-3 py-1.5 text-xs uppercase tracking-widest transition-colors ${selectedCategory === category.id
                   ? 'bg-black text-white'
                   : 'border border-neutral-200 text-neutral-600 hover:border-black hover:text-black'
-              }`}
+                }`}
             >
               {category.name}
             </button>

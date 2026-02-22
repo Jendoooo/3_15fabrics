@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCartStore } from '@/lib/cart-store';
 import { Menu, X, Instagram } from 'lucide-react';
 
@@ -36,7 +37,7 @@ export default function Header() {
 
     return (
         <>
-            <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-neutral-100">
+            <header className="sticky top-0 z-50 w-full bg-brand-cream/95 backdrop-blur-md border-b border-brand-gold/10">
                 <div className="flex h-16 items-center justify-between px-6 md:px-12">
                     {/* Hamburger — mobile only */}
                     <button
@@ -57,7 +58,7 @@ export default function Header() {
 
                     {/* Logo — centred on mobile */}
                     <Link href="/" className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
-                        <span className="text-sm font-light uppercase tracking-[0.25em] text-black">315 Fabrics</span>
+                        <Image src="/images/logo.png" alt="3:15 Fabrics" width={80} height={40} className="w-auto h-8 md:h-10 object-contain" priority />
                     </Link>
 
                     <div className="flex items-center gap-6">
@@ -71,23 +72,21 @@ export default function Header() {
 
             {/* Backdrop — fades in behind the panel */}
             <div
-                className={`fixed inset-0 z-[199] bg-black/50 backdrop-blur-[2px] transition-opacity duration-300 ${
-                    isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}
+                className={`fixed inset-0 z-[199] bg-black/50 backdrop-blur-[2px] transition-opacity duration-300 ${isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    }`}
                 onClick={closeMenu}
                 aria-hidden="true"
             />
 
             {/* Slide-in panel from left */}
             <div
-                className={`fixed top-0 left-0 h-full w-[82%] max-w-[340px] z-[200] bg-[#0a0a0a] flex flex-col transition-transform duration-300 ease-out ${
-                    isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}
+                className={`fixed top-0 left-0 h-full w-[82%] max-w-[340px] z-[200] bg-brand-dark flex flex-col transition-transform duration-300 ease-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+                    }`}
             >
                 {/* Panel header */}
                 <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0">
                     <Link href="/" onClick={closeMenu}>
-                        <span className="text-sm font-light uppercase tracking-[0.25em] text-white/80">315 Fabrics</span>
+                        <Image src="/images/logo.png" alt="3:15 Fabrics" width={80} height={40} className="w-auto h-8 object-contain bg-white rounded-sm px-1.5 py-0.5" />
                     </Link>
                     <button
                         onClick={closeMenu}

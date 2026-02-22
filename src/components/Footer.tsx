@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Instagram, MessageCircle } from 'lucide-react';
 
 export default function Footer() {
@@ -52,10 +53,12 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-black px-6 py-16 text-white md:px-12">
+    <footer className="bg-brand-dark px-6 py-16 text-white md:px-12">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 md:grid-cols-3">
         <div>
-          <h3 className="mb-6 text-xl tracking-widest font-light">315 Fabrics</h3>
+          <div className="mb-6">
+            <Image src="/images/logo.png" alt="3:15 Fabrics" width={100} height={50} className="w-auto h-12 object-contain bg-white rounded-sm px-2 py-1" />
+          </div>
           <p className="mb-6 text-sm leading-relaxed text-neutral-400">
             Premium fabrics, sourced from around the world. Based in Epe, Lagos.
           </p>
@@ -70,7 +73,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <h4 className="mb-6 text-sm uppercase tracking-widest">Explore</h4>
+          <h4 className="mb-6 text-sm uppercase tracking-widest text-brand-gold">Explore</h4>
           <ul className="space-y-3 text-sm text-neutral-400">
             <li>
               <Link href="/shop" className="transition-colors hover:text-white">Shop</Link>
@@ -91,7 +94,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <h4 className="mb-6 text-sm uppercase tracking-widest">Help</h4>
+          <h4 className="mb-6 text-sm uppercase tracking-widest text-brand-gold">Help</h4>
           <ul className="space-y-3 text-sm text-neutral-400">
             <li>
               <Link href="/faq" className="transition-colors hover:text-white">FAQ</Link>
@@ -108,7 +111,7 @@ export default function Footer() {
 
       <div className="mx-auto mt-16 max-w-7xl border-t border-white/10 pt-12">
         <div className="max-w-md">
-          <h4 className="mb-6 text-sm uppercase tracking-widest">Join the Waitlist</h4>
+          <h4 className="mb-6 text-sm uppercase tracking-widest text-brand-gold">Join the Waitlist</h4>
           <p className="mb-4 text-sm text-neutral-400">
             New fabrics, asoebi sets, and exclusive offers — straight to your inbox.
           </p>

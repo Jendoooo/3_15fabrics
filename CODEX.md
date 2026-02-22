@@ -422,6 +422,26 @@ export default function YardageGuidePage() { ... }
 - **Tricky parts:** None functionally; the key risk was accidental edits to tracking logic, which I avoided by changing only the display line.
 - **What Claude should verify:** Confirm `/size-guide` returns 404 and `/track` now shows the `315-` format example while API behavior remains unchanged.
 
+### [C8] - Checkout success fabric copy | Done: 2026-02-22 10:23
+- **What I did:** Updated `src/app/(site)/checkout/success/page.tsx` copy to fabric-focused language, including "Your fabric order has been confirmed.", delivery follow-up text via WhatsApp timing confirmation, and changed the secondary CTA label from "Continue Shopping" to "Back to Shop" while keeping `href="/shop"`.
+- **Why I approached it this way:** I preserved all existing success-page mechanics (order query param read, cart clearing side effect, and tracking link logic) and limited the change to display copy/labels as requested.
+- **Tricky parts:** `react/no-unescaped-entities` lint rule required wording that avoids raw apostrophes in JSX text nodes.
+- **What Claude should verify:** Confirm the success page still clears cart and shows the same order number behavior, and verify updated copy tone aligns with fabric-first brand voice.
+
+### [C9] - Shop sort pills UI | Done: 2026-02-22 10:23
+- **What I did:** Verified `src/app/(site)/shop/page.tsx` now includes server-side `sort` parsing, sorted product query ordering (`newest`, `price-asc`, `price-desc`), cache-key scoping by sort, and sort pills rendered below gender pills with a "Sort by:" label and links preserving the selected `gender` query param.
+- **Why I approached it this way:** C9 depends on G11; the required G11 wiring was already present in the file, so I validated and retained it rather than duplicating logic, then verified it still matches the C9 UI contract.
+- **Tricky parts:** Ensuring query-string preservation across both gender and sort controls without introducing client state.
+- **What Claude should verify:** Confirm sort pill links produce expected URL combinations (`/shop`, `/shop?sort=price-asc`, `/shop?gender=women&sort=price-desc`) and that server-side ordering reflects each selection.
+
+---
+
+### [C10] - Replace Application Logo | Done: 2026-02-22 10:28
+- **What I did:** Updated `Header.tsx`, `Footer.tsx` and `AdminSidebar.tsx` to use the `next/image` component to display the new `logo.png`. Used inline styling (e.g., adding a light bounding box) to maintain contrast against dark backgrounds.
+- **Why I approached it this way:** The requirement was strictly to swap the text element to an image representation. The image needed to look correct in both light (`AdminSidebar`/`Header`) and dark (`Footer`/Slide-in Menu) environments.
+- **Tricky parts:** Ensuring the correct use of `next/image` sizes to prevent overflow, and preventing unreadable contrast for dark backgrounds. 
+- **What Claude should verify:** That the logo scales correctly on mobile, and the white-bordered style in the Footer/Header slide-in effectively sets off the green logo on dark backgrounds.
+
 ---
 
 ## ⚠ NEW TASKS — Batch 3 (2026-02-22)
@@ -507,9 +527,34 @@ Add a "Sort by:" label before the pills: `<span className="text-xs uppercase tra
 
 ---
 
+## ⚠ NEW TASKS — Batch 6 (2026-02-22)
+
+You have 3 new tasks: **C11, C12, C13**. Work order: C11 → C12 → C13.
+
+### C11: Design overhaul — warm earth-tone brand palette
+**Files:** `tailwind.config.ts`, `src/app/globals.css`, `src/app/layout.tsx`
+- Add brand colors: earth (#8B6914), gold (#C5A55A), cream (#FFF8F0), forest (#2D5A27), dark (#1A1A1A)
+- Add `Playfair Display` font for headings via Google Fonts import
+- Update CSS vars: `--background: #FFF8F0; --foreground: #1A1A1A`
+
+### C12: Homepage hero redesign
+**File:** `src/app/(site)/page.tsx`
+- Replace black hero with warm `bg-brand-cream` design
+- Title in Playfair Display, subtitle: "Every great outfit starts with great fabric"
+- Founder credit: "Curated by Ayodeji — Epe, Lagos" in gold
+- CTA: `bg-brand-forest` primary, `border-brand-gold` secondary
+- Update pillars strip, category cards, and Instagram CTA with warm tones
+
+### C13: ProductCard empty state + Header/Footer warm tones
+- ProductCard: `bg-brand-cream` placeholder when no image
+- Header: `bg-brand-cream/95` instead of white, `bg-brand-dark` for mobile menu
+- Footer: `bg-brand-dark` instead of black, `text-brand-gold` section headings
+
+---
+
 ## Notes for Future Batches
 
-- The visual aesthetic (warm earth tones, gold accents) is queued — do NOT change Tailwind colors until explicitly assigned.
+- The visual aesthetic (warm earth tones, gold accents) is NOW being implemented in C11-C13.
 - The lookbook is set to "Coming Soon" for now — no gallery needed until the owner has campaign photos.
 - Admin session cookie is now `315fabrics_admin_session` (renamed by Gemini G5).
 - When products are seeded from Instagram, `product_variants.size` will be `null` for all rows — colorways only.

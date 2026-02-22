@@ -376,8 +376,7 @@ export default function AdminProductsPage() {
 
       if (productError || !insertedProduct) {
         rowErrors.push(
-          `Line ${row.line} (${row.product.slug}): ${
-            productError?.message ?? 'Failed to create product.'
+          `Line ${row.line} (${row.product.slug}): ${productError?.message ?? 'Failed to create product.'
           }`
         );
         continue;
@@ -558,14 +557,19 @@ export default function AdminProductsPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium">{product.name}</span>
                   <span
-                    className={`rounded-sm px-2 py-0.5 text-[10px] uppercase tracking-widest ${
-                      STATUS_COLORS[product.status] ?? 'bg-neutral-100'
-                    }`}
+                    className={`rounded-sm px-2 py-0.5 text-[10px] uppercase tracking-widest ${STATUS_COLORS[product.status] ?? 'bg-neutral-100'
+                      }`}
                   >
                     {product.status.replace('_', ' ')}
                   </span>
                 </div>
-                <p className="mt-0.5 text-sm text-neutral-500">{formatNaira(product.price)}</p>
+                <div className="mt-1 flex items-center gap-2 text-[11px] text-neutral-500 tracking-wider">
+                  <p>{formatNaira(product.price)}</p>
+                  <span>&bull;</span>
+                  <p className="uppercase">{product.fabric_type ?? 'N/A'}</p>
+                  <span>&bull;</span>
+                  <p className="uppercase">{product.unit_type === 'bundle' ? 'Bundle' : 'Per Yard'}</p>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <Link

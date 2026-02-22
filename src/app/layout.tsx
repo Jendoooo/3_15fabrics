@@ -1,8 +1,12 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-display',
+});
 
 export const metadata: Metadata = {
   title: '315 Fabrics',
@@ -17,7 +21,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-white text-black min-h-screen`}>
+      <body className={`${inter.className} ${playfairDisplay.variable} bg-background text-foreground min-h-screen`}>
         {children}
       </body>
     </html>

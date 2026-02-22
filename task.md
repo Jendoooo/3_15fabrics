@@ -43,7 +43,6 @@
 - [ ] Set up new Supabase project + run both migrations (infrastructure — user action, not code)
 - [ ] Set up new Paystack account for the sister's store (infrastructure — user action, not code)
 - [ ] Update .env.local with 315 Fabrics credentials (user action)
-- [ ] Replace logo images in /public with 315 Fabrics logo (when logo is available)
 - [ ] Admin: product bulk CSV template — update column headers for fabric fields (unit_type, fabric_type, minimum_quantity)
 
 ---
@@ -247,13 +246,13 @@
 
 ### Batch 4 — Assigned 2026-02-22
 
-- [ ] **TASK G7:** Update order confirmation email item display for fabric yards.
+- [x] **TASK G7:** Update order confirmation email item display for fabric yards. | Done: 2026-02-22 10:23
   **File:** `src/lib/email.ts` — read first. Find the order items loop inside the HTML email template (look for `item.name`, `item.size`). Update each item row:
   - Change `Size: ${item.size || 'N/A'}` → `"${item.yards_ordered ?? item.quantity} yards — ${item.color || 'Standard'}"` (shows yards and colorway)
   - Also update the subject line for order confirmation from plain "Your order [number] is confirmed" to "Your 315 Fabrics order [number] is confirmed — we'll be in touch shortly"
   - Update the WhatsApp notification text (Fonnte call — likely in the same file or in the orders API): where it lists order items, replace "Size: ..." with "${yards} yards — ${color}". Find all places that mention item details in the notification.
 
-- [ ] **TASK G8:** Repurpose `src/app/(site)/collections/page.tsx` as "Shop by Fabric Type" page.
+- [x] **TASK G8:** Repurpose `src/app/(site)/collections/page.tsx` as "Shop by Fabric Type" page. | Done: 2026-02-22 10:23
   Read the file first. Replace the ENTIRE component — it currently shows editorial campaign collections (iby_closet concept). The new version queries the `categories` table and shows a clean card grid.
   **New component:**
   ```tsx
@@ -270,7 +269,7 @@
   Example card: `border border-neutral-200 p-8 hover:border-black transition-colors group` with `text-lg uppercase tracking-widest` for name and a subtle `→` that slides on hover.
   Export `export const dynamic = 'force-dynamic'` AFTER imports.
 
-- [ ] **TASK G9:** Update homepage `src/app/(site)/page.tsx` "Shop by Category" section to show fabric categories from DB (not collections).
+- [x] **TASK G9:** Update homepage `src/app/(site)/page.tsx` "Shop by Category" section to show fabric categories from DB (not collections). | Done: 2026-02-22 10:23
   Read the file first. The homepage currently fetches `collections` table for the "Shop by Category" section. Replace this:
   - Change the `featuredCollections` query to instead query the `categories` table: `supabaseServer.from('categories').select('id, name, slug').order('sort_order', { ascending: true }).limit(6)`
   - Rename the returned key from `collections` to `categories`
@@ -279,7 +278,7 @@
   - Update the type annotation (rename `FeaturedCollection` to `FabricCategory` = `Pick<Category, 'id' | 'name' | 'slug'>`)
   - Remove the `Collection` import from types.
 
-- [ ] **TASK G10:** Create `scripts/seed_test_products.js` — insert 2 test products for checkout testing. Follow the same dotenv + supabase pattern as other scripts.
+- [x] **TASK G10:** Create `scripts/seed_test_products.js` — insert 2 test products for checkout testing. Follow the same dotenv + supabase pattern as other scripts. | Done: 2026-02-22 10:23
   **Product 1 — yard-type:**
   ```js
   { name: 'Rich Ankara Print — Test', slug: 'test-ankara-print', description: 'A vibrant test Ankara product for checkout testing.', price: 5000, status: 'active', unit_type: 'yard', minimum_quantity: 5, fabric_type: 'Ankara', gender: 'unisex', is_featured: true }
@@ -294,7 +293,7 @@
   Then 1 image: `{ image_url: 'https://placehold.co/600x800/333/ccc?text=Senator+Bundle', is_primary: true, sort_order: 0 }`.
   Use upsert on `slug` to avoid duplicates. Log results. **Do NOT run** — just create the script.
 
-- [ ] **TASK G11:** Add `sort` param to `src/app/(site)/shop/page.tsx` server component.
+- [x] **TASK G11:** Add `sort` param to `src/app/(site)/shop/page.tsx` server component. | Done: 2026-02-22 10:23
   Read the file first. Currently `searchParams` only has `gender`. Add `sort` to the destructuring:
   ```ts
   const sortParam = Array.isArray(searchParams?.sort) ? searchParams?.sort[0] : searchParams?.sort;
@@ -307,15 +306,15 @@
   Update the cachedFetch key to `shop:products:${gender ?? 'all'}:${sort}` so different sorts get separate cache entries.
   Pass `sort` as a new prop to `<ShopFilter sort={sort ?? 'newest'} />` — ShopFilter may not use it yet (C9 adds the UI), but wire up the prop so data is correct.
 
-- [ ] **TASK G12:** Review admin manual order form `src/app/admin/orders/new/page.tsx`. Read the file first.
+- [x] **TASK G12:** Review admin manual order form `src/app/admin/orders/new/page.tsx`. Read the file first. | Done: 2026-02-22 10:23
   **(1)** Search for any remaining `iby_closet`, `IBY-`, or old WhatsApp numbers — fix them.
   **(2)** The order item row should have a "Yards Ordered" field. Find where order items (product lines) are entered in the form. If there's a `quantity` field per item, add a `yardsOrdered` input next to it (or replace it with clearer labeling: "Qty / Yards" with a note). When submitting, include `yards_ordered: item.yardsOrdered ?? item.quantity` in the payload sent to `POST /api/orders`.
 
-- [ ] **TASK G13:** Review admin quick-sale page `src/app/admin/quick-sale/page.tsx`. Read the file first.
+- [x] **TASK G13:** Review admin quick-sale page `src/app/admin/quick-sale/page.tsx`. Read the file first. | Done: 2026-02-22 10:23
   **(1)** Search for any remaining `iby_closet`, `IBY-` references — fix them.
   **(2)** When it builds the order payload and calls `POST /api/orders`, ensure each item includes `yards_ordered: item.quantity` (since for a quick-sale, quantity entered = yards). This is a one-line addition to the item object.
 
-- [ ] **TASK G14:** Update admin products list page `src/app/admin/products/page.tsx`. Read the file first.
+- [x] **TASK G14:** Update admin products list page `src/app/admin/products/page.tsx`. Read the file first. | Done: 2026-02-22 10:23
   Add `fabric_type` and `unit_type` columns to the product table so Ayodei can see fabric details at a glance:
   - In the Supabase select query, add `fabric_type, unit_type` to the selected fields
   - In the table header row, add columns: "Fabric Type" and "Sold By"
@@ -326,7 +325,7 @@
 
 ## CODEX — Batch 4 — Assigned 2026-02-22
 
-- [ ] **TASK C8:** Checkout success page — fabric-specific copy. Read `src/app/(site)/checkout/success/page.tsx` first.
+- [x] **TASK C8:** Checkout success page — fabric-specific copy. Read `src/app/(site)/checkout/success/page.tsx` first. | Done: 2026-02-22 10:23
   Update copy to be fabric-focused:
   - Main heading: "Order Confirmed" (keep as-is if already correct — just remove any "🎉" emoji or "styled" language that sounds like fashion not fabric)
   - If there's a message like "Your order has been placed": update to "Your fabric order has been confirmed."
@@ -334,7 +333,7 @@
   - If there are any `IBY-` format references in the display (other than the order number itself which comes from DB): change to `315-`
   - Do NOT change the order number display logic itself (it reads from params/DB)
 
-- [ ] **TASK C9:** Sort UI on shop page. Read `src/app/(site)/shop/page.tsx` first.
+- [x] **TASK C9:** Sort UI on shop page. Read `src/app/(site)/shop/page.tsx` first. | Done: 2026-02-22 10:23
   After G11 adds the server-side `sort` param, add UI for it:
   Add sort pills **below** the gender pills, labeled "Sort by:". Same pill style (border, uppercase, tracking-widest, black active state):
   ```tsx
@@ -350,10 +349,78 @@
 
 ---
 
+## CODEX — Batch 5 — Assigned 2026-02-22
+
+- [x] **TASK C10:** Replace the application logo with the new 3:15 Fabrics logo. | Done: 2026-02-22 10:28
+  - The user has provided the logo. Please ask the user to save it to `public/images/logo.png` (or similar) and update the `<Image>` tags in `src/components/Header.tsx`, `src/components/Footer.tsx`, and `AdminSidebar.tsx` to use this new logo instead of text/old images.
+
+---
+
+## GEMINI — Batch 5 — Assigned 2026-02-22
+
+- [x] **TASK G15:** Fix founder name across codebase. Read each file before editing. | Done: 2026-02-22 10:45
+  **(1) `src/app/(site)/brand/page.tsx`** — change ALL occurrences of `Ayodei` → `Ayodeji`. The full correct name is **Ayodeji Modinat Ayeola-Musari**. Check metadata description too.
+  **(2)** Grep `src/` for any remaining `Ayodei` (without the `j`) and fix all instances.
+
+- [ ] **TASK G16:** Run the Instagram product seed script to populate the products table.
+  **Pre-requisite:** `.env.local` must have `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` set. If not present, log `⚠ BLOCKED: Missing Cloudinary credentials`.
+  **(1)** Run `node scripts/seed_from_instagram.js`
+  **(2)** Log the output (how many products created/skipped/errored)
+  **(3)** After seeding, tell the user to activate a few products via admin or SQL: `UPDATE products SET status = 'active', is_featured = true WHERE status = 'draft' LIMIT 8;`
+
+- [ ] **TASK G17:** Create production schema safety-net script.
+  Create `scripts/ensure_production_schema.js` — follows the same dotenv + supabase pattern. Runs these statements via supabase-js raw SQL (use `.rpc('exec_sql', { sql: ... })` or just note them for the user to paste into SQL Editor):
+  ```sql
+  ALTER TABLE products ADD COLUMN IF NOT EXISTS unit_type TEXT DEFAULT 'yard' CHECK (unit_type IN ('yard', 'bundle'));
+  ALTER TABLE products ADD COLUMN IF NOT EXISTS minimum_quantity NUMERIC NOT NULL DEFAULT 1;
+  ALTER TABLE products ADD COLUMN IF NOT EXISTS fabric_type TEXT;
+  ALTER TABLE products ADD COLUMN IF NOT EXISTS gender TEXT DEFAULT 'unisex' CHECK (gender IN ('men', 'women', 'unisex'));
+  ALTER TABLE order_items ADD COLUMN IF NOT EXISTS yards_ordered NUMERIC;
+  ```
+  **Do NOT run** — create only.
+
+---
+
+## CODEX — Batch 6 — Assigned 2026-02-22
+
+- [x] **TASK C11:** Design overhaul — warm earth-tone brand palette. Read `tailwind.config.ts` and `src/app/globals.css` first. | Done: 2026-02-22 10:45
+  **(1) `tailwind.config.ts`** — extend theme with brand colors:
+  - `brand.earth: '#8B6914'` (warm brown)
+  - `brand.gold: '#C5A55A'` (rich gold accent)
+  - `brand.cream: '#FFF8F0'` (warm cream bg)
+  - `brand.forest: '#2D5A27'` (deep green matching logo)
+  - `brand.dark: '#1A1A1A'` (charcoal)
+  Also add fontFamily: `display: ['Playfair Display', 'serif']`
+  **(2) `src/app/globals.css`** — add Google Font import: `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');`. Update `:root` vars: `--background: #FFF8F0; --foreground: #1A1A1A;`
+  **(3) `src/app/layout.tsx`** — if there is a font import, keep it for body. Add Playfair Display as the display font class.
+
+- [x] **TASK C12:** Homepage hero redesign with new brand identity. Read `src/app/(site)/page.tsx` first. | Done: 2026-02-22 10:45
+  **(1)** Replace the black hero with a warm, premium design:
+  - Background: `bg-brand-cream` or warm gradient
+  - Title: keep "315 Fabrics" but use `font-display` (Playfair Display)
+  - Subtitle: "Every great outfit starts with great fabric"
+  - Founder credit: "Curated by Ayodeji — Epe, Lagos" in small gold text
+  - CTA buttons: `bg-brand-forest text-white` for primary, `border-brand-gold text-brand-gold` for secondary
+  **(2)** Update "Pillars strip": `bg-brand-cream border-brand-gold/20`
+  **(3)** Update "Shop by Category" cards: add gold border on hover (`hover:border-brand-gold`)
+  **(4)** Instagram CTA section: `bg-brand-dark` with gold accents
+
+- [x] **TASK C13:** ProductCard empty state + Header/Footer warm tones. Read each file first. | Done: 2026-02-22 10:45
+  **(1) `src/components/ProductCard.tsx`** — when `imageUrl` is null, show a `bg-brand-cream` placeholder with centered "No Image" text instead of broken image. Keep same aspect ratio.
+  **(2) `src/components/Header.tsx`** — update background from `bg-white/90` to `bg-brand-cream/95`. Mobile menu from `bg-[#0a0a0a]` to `bg-brand-dark`.
+  **(3) `src/components/Footer.tsx`** — background from `bg-black` to `bg-brand-dark`. Section headings: add `text-brand-gold`.
+
+---
+
 ## CLAUDE — Audits + Architecture
 
 - [x] Fork from iby_closet, audit full codebase | Done: 2026-02-22
 - [x] Create CLAUDE.md, GEMINI.md, CODEX.md, task.md for 315 Fabrics | Done: 2026-02-22
-- [x] Assign Batch 1: G1-G3 to Gemini, C1-C3 to Codex | Done: 2026-02-22
+- [x] Assign Batch 1-4
+- [x] Review Vercel Application Error (Digest: 2605223714).
+  - **Diagnosis:** The Vercel runtime exception is almost certainly caused by the production database missing the recent Supabase migrations (specifically the `categories` table or `unit_type` columns). When `page.tsx` or `shop.tsx` loads, it crashes because Supabase throws an error, which is caught and re-thrown by our `cachedFetch` error handler, crashing the Next.js static render or SSR.
+  - **Resolution:** The human user must run the SQL migrations on the Supabase project linked to the Vercel environment!
+
+
 
 

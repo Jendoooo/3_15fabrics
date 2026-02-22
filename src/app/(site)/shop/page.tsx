@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 type ShopPageProps = {
   searchParams?: {
     gender?: string | string[];
+    sort?: string | string[];
   };
 };
 
@@ -23,6 +24,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       ? (genderParam as 'men' | 'women' | 'unisex')
       : null;
 
+  const sortParam = Array.isArray(searchParams?.sort) ? searchParams?.sort[0] : searchParams?.sort;
+  const sort = (['newest', 'price-asc', 'price-desc'] as const).includes(sortParam as 'newest' | 'price-asc' | 'price-desc') ? (sortParam as 'newest' | 'price-asc' | 'price-desc') : 'newest';
+
   const { data: categories, error: categoriesError } = await supabaseServer
     .from('categories')
     .select('id, name, slug')
@@ -33,7 +37,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   }
 
   const { typedProducts, imageMap } = await cachedFetch(
-    `shop:products:${gender ?? 'all'}`,
+    `shop:products:${gender ?? 'all'}:${sort}`,
     async () => {
       let productsQuery = supabaseServer
         .from('products')
@@ -44,9 +48,11 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         productsQuery = productsQuery.eq('gender', gender);
       }
 
-      const { data: products, error: productsError } = await productsQuery.order('created_at', {
-        ascending: false,
-      });
+      if (sort === 'price-asc') productsQuery = productsQuery.order('price', { ascending: true });
+      else if (sort === 'price-desc') productsQuery = productsQuery.order('price', { ascending: false });
+      else productsQuery = productsQuery.order('created_at', { ascending: false });
+
+      const { data: products, error: productsError } = await productsQuery;
 
       if (productsError) {
         throw new Error(productsError.message);
@@ -100,27 +106,52 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   return (
     <main className="min-h-screen bg-white text-black py-24 px-6 md:px-12">
       <h1 className="mb-12 text-4xl font-light uppercase tracking-widest md:text-5xl">Shop All</h1>
-      <div className="mb-8 flex flex-wrap gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         {(['all', 'men', 'women', 'unisex'] as const).map((g) => {
-          const href = g === 'all' ? '/shop' : `/shop?gender=${g}`;
+          const href = `/shop${g === 'all' ? '' : `?gender=${g}`}${sort !== 'newest' ? `${g === 'all' ? '?' : '&'}sort=${sort}` : ''}`;
           const active = (gender ?? 'all') === g;
 
           return (
             <Link
               key={g}
               href={href}
-              className={`border px-4 py-1.5 text-xs uppercase tracking-widest transition-colors ${
-                active
+              className={`border px-4 py-1.5 text-xs uppercase tracking-widest transition-colors ${active
                   ? 'border-black bg-black text-white'
                   : 'border-neutral-300 text-neutral-600 hover:border-black hover:text-black'
-              }`}
+                }`}
             >
               {g === 'all' ? 'All' : g.charAt(0).toUpperCase() + g.slice(1)}
             </Link>
           );
         })}
       </div>
-      <ShopFilter products={productsForFilter} categories={typedCategories} />
+
+      <div className="mb-8 flex flex-wrap items-center gap-2">
+        <span className="text-xs uppercase tracking-widest text-neutral-500 mr-2">Sort by:</span>
+        {[
+          { value: 'newest', label: 'Newest' },
+          { value: 'price-asc', label: 'Price ↑' },
+          { value: 'price-desc', label: 'Price ↓' },
+        ].map((option) => {
+          const href = `/shop${gender ? `?gender=${gender}` : ''}${option.value === 'newest' ? '' : `${gender ? '&' : '?'}sort=${option.value}`}`;
+          const active = sort === option.value;
+
+          return (
+            <Link
+              key={option.value}
+              href={href}
+              className={`border px-4 py-1.5 text-xs uppercase tracking-widest transition-colors ${active
+                  ? 'border-black bg-black text-white'
+                  : 'border-neutral-300 text-neutral-600 hover:border-black hover:text-black'
+                }`}
+            >
+              {option.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      <ShopFilter products={productsForFilter} categories={typedCategories} sort={sort} />
     </main>
   );
 }

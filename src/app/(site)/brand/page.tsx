@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Our Story — 315 Fabrics',
   description:
-    'Premium asoebi fabrics from Epe, Lagos. Founded by Ayodei Modinat Ayeola-Musari — over 8 years in the fabric business.',
+    'Premium asoebi fabrics from Epe, Lagos. Founded by Ayodeji Modinat Ayeola-Musari — over 8 years in the fabric business.',
 };
 
 export default function BrandPage() {
@@ -17,7 +17,7 @@ export default function BrandPage() {
             Our Story
           </h1>
           <p className="text-sm uppercase tracking-[0.25em] text-neutral-400">
-            Epe, Lagos &mdash; Founded by Ayodei Modinat Ayeola-Musari
+            Epe, Lagos &mdash; Founded by Ayodeji Modinat Ayeola-Musari
           </p>
         </div>
       </section>
@@ -27,8 +27,8 @@ export default function BrandPage() {
         <p className="text-lg leading-relaxed text-neutral-700 md:text-xl">
           <strong className="font-semibold text-black">315 Fabrics</strong> is a fabric store
           based in Epe, Lagos, founded by{' '}
-          <strong className="font-semibold text-black">Ayodei Modinat Ayeola-Musari</strong>.
-          With over 8 years in the fabric business, Ayodei has built a reputation for sourcing
+          <strong className="font-semibold text-black">Ayodeji Modinat Ayeola-Musari</strong>.
+          With over 8 years in the fabric business, Ayodeji has built a reputation for sourcing
           the finest Ankara, French Lace, Swiss Voile, Aso-Oke, Senator material, and more —
           from markets in China, India, and across Nigeria.
         </p>
@@ -63,7 +63,7 @@ export default function BrandPage() {
           {[
             {
               title: '8+ Years of Experience',
-              text: 'Ayodei has spent over 8 years building supplier relationships across Lagos, China, and India — so every fabric that reaches you has been personally vetted for quality.',
+              text: 'Ayodeji has spent over 8 years building supplier relationships across Lagos, China, and India — so every fabric that reaches you has been personally vetted for quality.',
             },
             {
               title: 'Asoebi Specialists',

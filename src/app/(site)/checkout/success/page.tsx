@@ -22,8 +22,9 @@ function SuccessContent() {
         <p className="mb-8 text-2xl font-light uppercase tracking-widest md:text-3xl">
           {orderNumber || '315-XXXXXX'}
         </p>
+        <p className="mb-3 text-sm text-neutral-500">Your fabric order has been confirmed.</p>
         <p className="mb-12 text-sm text-neutral-500">
-          We&apos;ll send updates to your WhatsApp as your delivery moves.
+          We will send you a WhatsApp message to confirm delivery timing.
         </p>
 
         <div className="space-y-4">
@@ -37,7 +38,7 @@ function SuccessContent() {
             href="/shop"
             className="block w-full bg-black py-4 text-sm uppercase tracking-widest text-white transition-colors hover:bg-neutral-800"
           >
-            Continue Shopping
+            Back to Shop
           </Link>
         </div>
       </div>

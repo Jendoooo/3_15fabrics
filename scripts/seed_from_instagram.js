@@ -1,33 +1,21 @@
 require('dotenv').config({ path: '.env.local' });
 const { createClient } = require('@supabase/supabase-js');
-const cloudinary = require('cloudinary').v2;
 const XLSX = require('xlsx');
-const fetch = require('node-fetch'); // NOTE: using node-fetch for CommonJS compat
 
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-async function uploadToCloudinary(url, publicId) {
-    const response = await fetch(url);
-    const buffer = await response.buffer();
-    return new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-            { folder: '315fabrics/instagram', public_id: publicId },
-            (error, result) => error ? reject(error) : resolve(result.secure_url)
-        ).end(buffer);
-    });
+if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase credentials in .env.local');
+    process.exit(1);
 }
 
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 function stripEmojis(str) {
-    return str.replace(/[\u{1F000}-\u{1FFFF}|\u{2600}-\u{27BF}|\u{1F900}-\u{1F9FF}|\u{FE00}-\u{FEFF}]/gu, '').trim();
+    return str
+        .replace(/[\u{1F000}-\u{1FFFF}|\u{2600}-\u{27BF}|\u{1F900}-\u{1F9FF}|\u{FE00}-\u{FEFF}]/gu, '')
+        .trim();
 }
 
 function detectFabricType(caption) {
@@ -39,13 +27,33 @@ function detectFabricType(caption) {
     if (c.includes('aso-oke') || c.includes('asooke')) return 'Aso-Oke';
     if (c.includes('senator')) return 'Senator';
     if (c.includes('cotton')) return 'Cotton';
+    if (c.includes('silk')) return 'Silk';
+    if (c.includes('chiffon')) return 'Chiffon';
     return null;
 }
 
+// Generate a reasonable price based on fabric type
+function suggestPrice(fabricType) {
+    const prices = {
+        'Ankara': 5000,
+        'French Lace': 18000,
+        'Swiss Voile': 12000,
+        'Aso-Oke': 35000,
+        'Senator': 28000,
+        'Cotton': 4000,
+        'Silk': 15000,
+        'Chiffon': 8000,
+    };
+    return prices[fabricType] || 0;
+}
+
 async function run() {
+    console.log('Reading Excel file...');
     const wb = XLSX.readFile('./IGPOSTS_USERS_3_15fabrics_100.xlsx');
     const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
     const validRows = rows.filter(r => r['Is Video'] !== 'YES');
+
+    console.log(`Found ${rows.length} total rows, ${validRows.length} non-video posts to process.\n`);
 
     let created = 0, skipped = 0, errors = 0;
 
@@ -53,6 +61,7 @@ async function run() {
         const shortcode = row['Shortcode'];
         const caption = row['Caption'] || '';
         const cleanCaption = stripEmojis(caption).substring(0, 60).trim();
+        const fabricType = detectFabricType(caption);
 
         const productData = {
             name: cleanCaption || 'Fabric Post',
@@ -60,23 +69,20 @@ async function run() {
             description: caption || null,
             status: 'draft',
             unit_type: 'yard',
-            minimum_quantity: 1,
+            minimum_quantity: 5,
             is_featured: false,
-            price: 0,
-            fabric_type: detectFabricType(caption),
-            gender: 'unisex'
+            price: suggestPrice(fabricType),
+            fabric_type: fabricType,
+            gender: 'unisex',
         };
 
         try {
-            const { data: existing, error: errExist } = await supabase
+            // Check if product already exists
+            const { data: existing } = await supabase
                 .from('products')
                 .select('id')
                 .eq('slug', shortcode)
                 .maybeSingle();
-
-            if (errExist && errExist.code !== 'PGRST116') {
-                throw new Error(`DB Error checking existence: ${errExist.message}`);
-            }
 
             if (existing) {
                 skipped++;
@@ -84,6 +90,7 @@ async function run() {
                 continue;
             }
 
+            // Insert product
             const { data: newProduct, error: errInsert } = await supabase
                 .from('products')
                 .upsert(productData, { onConflict: 'slug' })
@@ -96,31 +103,45 @@ async function run() {
 
             const productId = newProduct.id;
 
-            let urlsToProcess = [];
-            const thumbnailUrl = row['Thumbnail URL'];
-            if (thumbnailUrl) urlsToProcess.push(thumbnailUrl);
+            // Collect image URLs — use Instagram URLs directly (no Cloudinary needed)
+            let imageUrls = [];
 
+            // Primary: Thumbnail URL (always present for non-video)
+            const thumbnailUrl = row['Thumbnail URL'];
+            if (thumbnailUrl) imageUrls.push(thumbnailUrl);
+
+            // For carousel posts, add extra Image URLs
             if (row['Is Carousel'] === 'YES' && row['Image URLs']) {
-                const additionalUrls = row['Image URLs'].split('\n').filter(Boolean);
-                urlsToProcess.push(...additionalUrls);
+                const carouselUrls = row['Image URLs'].split('\n').filter(Boolean);
+                imageUrls.push(...carouselUrls);
             }
 
-            urlsToProcess = urlsToProcess.filter(Boolean).slice(0, 4);
+            // Also try the single Image URL column
+            if (row['Image URL'] && !imageUrls.includes(row['Image URL'])) {
+                imageUrls.push(row['Image URL']);
+            }
 
-            for (let i = 0; i < urlsToProcess.length; i++) {
-                const publicId = `${shortcode}_${i}`;
-                const cloudinaryUrl = await uploadToCloudinary(urlsToProcess[i], publicId);
+            // Cap at 4 images per product, deduplicate
+            imageUrls = [...new Set(imageUrls.filter(Boolean))].slice(0, 4);
 
-                await supabase.from('product_images').insert({
-                    product_id: productId,
-                    image_url: cloudinaryUrl,
-                    is_primary: i === 0,
-                    sort_order: i
-                });
+            // Insert images directly using Instagram URLs
+            for (let i = 0; i < imageUrls.length; i++) {
+                const { error: imgError } = await supabase
+                    .from('product_images')
+                    .insert({
+                        product_id: productId,
+                        image_url: imageUrls[i],
+                        is_primary: i === 0,
+                        sort_order: i,
+                    });
+
+                if (imgError) {
+                    console.warn(`  ⚠ Image insert error for ${shortcode}[${i}]: ${imgError.message}`);
+                }
             }
 
             created++;
-            console.log(`✓ Created: ${productData.name} | slug: ${shortcode}`);
+            console.log(`✓ Created: ${productData.name} | slug: ${shortcode} | images: ${imageUrls.length} | type: ${fabricType || 'unknown'}`);
 
         } catch (e) {
             errors++;
@@ -128,7 +149,14 @@ async function run() {
         }
     }
 
+    console.log(`\n========================================`);
     console.log(`Done. Created: ${created}, Skipped: ${skipped}, Errors: ${errors}`);
+    console.log(`========================================`);
+    console.log(`\nNext steps:`);
+    console.log(`  1. Go to your admin panel and set prices for draft products`);
+    console.log(`  2. Change status from 'draft' to 'active' for products you want to show`);
+    console.log(`  3. Or run this SQL to activate the first 12:`);
+    console.log(`     UPDATE products SET status = 'active', is_featured = true WHERE status = 'draft' ORDER BY created_at DESC LIMIT 12;`);
 }
 
 run();

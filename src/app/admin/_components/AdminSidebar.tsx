@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { ShoppingBag, Package, BookOpen, Users, Zap, LogOut, BarChart2 } from 'lucide-react';
 
@@ -24,9 +25,9 @@ export default function AdminSidebar() {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden w-52 flex-shrink-0 flex-col border-r border-neutral-200 bg-white md:flex">
-        <div className="flex h-14 items-center border-b border-neutral-200 px-5">
-          <span className="text-xs font-semibold uppercase tracking-widest">315 Fabrics</span>
-          <span className="ml-1.5 text-[10px] uppercase tracking-widest text-neutral-400">Admin</span>
+        <div className="flex h-14 items-center gap-2 border-b border-neutral-200 px-5">
+          <Image src="/images/logo.png" alt="3:15 Fabrics" width={60} height={30} className="w-auto h-8 object-contain" priority />
+          <span className="text-[10px] uppercase tracking-widest text-neutral-400 mt-1">Admin</span>
         </div>
         <nav className="flex-1 py-2">
           {navItems.map(({ href, label, icon: Icon }) => (

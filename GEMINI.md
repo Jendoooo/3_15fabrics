@@ -469,6 +469,26 @@ Add `fabric_type` and `unit_type` to the select query and to the rendered table:
 
 ---
 
+## ⚠ NEW TASKS — Batch 5 (2026-02-22)
+
+You have 3 new tasks: **G15, G16, G17**. Work order: G15 → G16 → G17.
+
+### G15: Fix founder name
+Change `Ayodei` → `Ayodeji` everywhere. Full correct name: **Ayodeji Modinat Ayeola-Musari**.
+- `src/app/(site)/brand/page.tsx` — fix in metadata description and all body text
+- Grep `src/` for any remaining `Ayodei` (without the `j`)
+
+### G16: Run Instagram product seed script
+**Pre-req:** Cloudinary credentials must be in `.env.local`.
+1. Run `node scripts/seed_from_instagram.js`
+2. Log output counts
+3. Tell user to activate products via admin or SQL
+
+### G17: Create production schema safety-net script
+Create `scripts/ensure_production_schema.js` with ALTER TABLE statements for all new columns. Do NOT run.
+
+---
+
 ## Progress Log
 
 - **[2026-02-22]** Gemini: Completed Batch 1 and Batch 2 tasks (G1, G2, G3, G4).
@@ -485,8 +505,27 @@ Add `fabric_type` and `unit_type` to the select query and to the rendered table:
   - Replaced using precise targeted multi-replace tool chunks to avoid breaking the surrounding component structure, keeping styling unchanged.
 - **Tricky parts:**
   - In `faq/page.tsx`, adjusting the metadata inline alongside the structural FAQ array definitions. In abandoned-cart, handling the fallback `http://localhost:3000` for `NEXT_PUBLIC_APP_URL`.
-- **What Claude should verify:**
   - Verify if any other admin session names or tracking URLs remain hardcoded (A grep for `iby_closet` and `iby_admin_session` was run, replacing all discovered instances).
+
+### Batch 4 — Assigned 2026-02-22 | Done: 2026-02-22 10:20
+- **What I did:** 
+  - (G7) Updated `src/lib/email.ts` to show "yards" instead of size in order confirmation emails and WhatsApp Fonnte notification payload.
+  - (G8) Repurposed `src/app/(site)/collections/page.tsx` into a "Shop by Fabric Type" page fetching from the `categories` table.
+  - (G9) Updated homepage `src/app/(site)/page.tsx` to display fabric categories instead of collections in the "Shop by Category" section.
+  - (G10) Created `scripts/seed_test_products.js` to seed Ankara yard and Senator bundle test products.
+  - (G11, C9) Added `sort` parameter logic to `src/app/(site)/shop/page.tsx`, updating the Supabase query. Implemented the "Sort by" pill UI directly in the component.
+  - (G12) Updated `src/app/admin/orders/new/page.tsx` with a specific "Yards Ordered" input field, passing it to the order payload.
+  - (G13) Updated `src/app/admin/quick-sale/page.tsx` so the cart maps quantity directly to `yards_ordered` in the API payload.
+  - (G14) Updated `src/app/admin/products/page.tsx` to include `fabric_type` and `unit_type` in the list display.
+  - (C8) Updated `src/app/(site)/checkout/success/page.tsx` with fabric-specific copy.
+- **Why I approached it this way:** 
+  - For the shop sorting (G11/C9), I implemented the logic server-side using search params, updating the `cachedFetch` key. Rendered the sorting UI using simple `Link` tags.
+  - In admin forms (G12), I added yards without removing quantity to support bundle scenarios.
+- **Tricky parts:**
+  - Ensuring the layout didn't break in `admin/products/page.tsx` when adding `fabric_type` and `unit_type` inline, and resolving a TSX mismatch with `ShopFilterProps`.
+- **What Claude should verify:**
+  - Verify that the sort functionality strictly behaves as expected when combined with the client-side `ShopFilter` component.
+
 
 ---
 

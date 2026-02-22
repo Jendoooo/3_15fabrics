@@ -11,6 +11,16 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        brand: {
+          earth: "#8B6914",
+          gold: "#C5A55A",
+          cream: "#FFF8F0",
+          forest: "#2D5A27",
+          dark: "#1A1A1A",
+        },
+      },
+      fontFamily: {
+        display: ["var(--font-display)", "Playfair Display", "serif"],
       },
     },
   },

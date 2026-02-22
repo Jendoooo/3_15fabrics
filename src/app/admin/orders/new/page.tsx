@@ -21,6 +21,7 @@ type OrderItemDraft = {
     size: string | null;
     color: string | null;
     quantity: number;
+    yardsOrdered?: number;
     unit_price: number;
 };
 
@@ -45,6 +46,7 @@ export default function ManualOrderEntryPage() {
     const [variants, setVariants] = useState<VariantInfo[]>([]);
     const [selectedVariantId, setSelectedVariantId] = useState('');
     const [quantity, setQuantity] = useState(1);
+    const [yardsOrdered, setYardsOrdered] = useState<number | ''>('');
 
     const [items, setItems] = useState<OrderItemDraft[]>([]);
 
@@ -96,6 +98,7 @@ export default function ManualOrderEntryPage() {
             size: variant.size,
             color: variant.color,
             quantity,
+            yardsOrdered: typeof yardsOrdered === 'number' ? yardsOrdered : quantity,
             unit_price: selectedProduct.price
         }]);
 
@@ -103,6 +106,7 @@ export default function ManualOrderEntryPage() {
         setVariants([]);
         setSelectedVariantId('');
         setQuantity(1);
+        setYardsOrdered('');
     };
 
     const removeItem = (index: number) => {
@@ -127,7 +131,7 @@ export default function ManualOrderEntryPage() {
             customer_phone: phone || null,
             customer_whatsapp: whatsapp || null,
             delivery_address: { street, city, state },
-            items,
+            items: items.map(i => ({ ...i, yards_ordered: i.yardsOrdered ?? i.quantity })),
             delivery_fee: 0, // Simplified for manual entry
             payment_method: paymentMethod,
             source
@@ -294,8 +298,11 @@ export default function ManualOrderEntryPage() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="mb-1 block text-[10px] uppercase tracking-widest">Quantity</label>
-                                            <input type="number" min="1" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} className="w-full border border-neutral-300 p-2 text-sm" />
+                                            <label className="mb-1 block text-[10px] uppercase tracking-widest">Qty / Yards</label>
+                                            <div className="flex gap-2">
+                                                <input type="number" min="1" placeholder="Qty" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} className="w-1/2 border border-neutral-300 p-2 text-sm" />
+                                                <input type="number" min="0" step="0.5" placeholder="Yards" value={yardsOrdered} onChange={e => setYardsOrdered(e.target.value ? parseFloat(e.target.value) : '')} className="w-1/2 border border-neutral-300 p-2 text-sm" />
+                                            </div>
                                         </div>
                                     </div>
 
@@ -316,7 +323,7 @@ export default function ManualOrderEntryPage() {
                                             <div>
                                                 <p className="text-sm font-medium">{item.product_name}</p>
                                                 <p className="text-xs text-neutral-500">
-                                                    {item.size || 'Standard'} {item.color ? `(${item.color})` : ''} × {item.quantity}
+                                                    {item.size || 'Standard'} {item.color ? `(${item.color})` : ''} &bull; Qty {item.quantity} &bull; {item.yardsOrdered} Yards
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-4">

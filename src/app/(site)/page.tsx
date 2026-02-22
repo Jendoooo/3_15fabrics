@@ -1,19 +1,18 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import ProductCard from '@/components/ProductCard';
 import FadeIn from '@/components/FadeIn';
 import { supabaseServer } from '@/lib/supabase';
 import { cachedFetch } from '@/lib/cache';
-import type { Collection, Product, ProductImage } from '@/lib/types';
+import type { Category, Product, ProductImage } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 type FeaturedProduct = Pick<Product, 'id' | 'name' | 'slug' | 'price'>;
-type FeaturedCollection = Pick<Collection, 'id' | 'name' | 'slug' | 'cover_image'>;
+type FabricCategory = Pick<Category, 'id' | 'name' | 'slug'>;
 type ProductPrimaryImage = Pick<ProductImage, 'product_id' | 'image_url' | 'sort_order'>;
 
 export default async function Home() {
-  const { products, productImageMap, collections } = await cachedFetch(
+  const { products, productImageMap, categories } = await cachedFetch(
     'home:featured',
     async () => {
       const { data: featuredProducts, error: featuredProductsError } = await supabaseServer
@@ -48,19 +47,18 @@ export default async function Home() {
         );
       }
 
-      const { data: featuredCollections, error: featuredCollectionsError } = await supabaseServer
-        .from('collections')
-        .select('id, name, slug, cover_image')
-        .eq('is_featured', true)
-        .in('status', ['active', 'upcoming'])
-        .limit(3);
+      const { data: featuredCategories, error: featuredCategoriesError } = await supabaseServer
+        .from('categories')
+        .select('id, name, slug')
+        .order('sort_order', { ascending: true })
+        .limit(6);
 
-      if (featuredCollectionsError) throw new Error(featuredCollectionsError.message);
+      if (featuredCategoriesError) throw new Error(featuredCategoriesError.message);
 
       return {
         products,
         productImageMap,
-        collections: (featuredCollections ?? []) as FeaturedCollection[],
+        categories: (featuredCategories ?? []) as FabricCategory[],
       };
     },
     300
@@ -68,27 +66,30 @@ export default async function Home() {
 
   return (
     <main className="bg-white">
-      {/* Hero — text-based until real photos available */}
-      <section className="flex min-h-screen flex-col items-center justify-center bg-black px-6 text-center text-white">
-        <p className="mb-6 text-[10px] uppercase tracking-[0.5em] text-neutral-500">
+      {/* Hero — warm brand identity */}
+      <section className="flex min-h-screen flex-col items-center justify-center bg-brand-cream px-6 text-center">
+        <p className="mb-6 text-[10px] uppercase tracking-[0.5em] text-brand-gold">
           Est. Epe, Lagos
         </p>
-        <h1 className="font-extralight uppercase leading-none tracking-[0.12em] text-white text-[clamp(3rem,11vw,8rem)]">
+        <h1 className="font-display font-light uppercase leading-none tracking-[0.08em] text-brand-dark text-[clamp(3rem,11vw,8rem)]">
           315 Fabrics
         </h1>
-        <p className="mt-6 max-w-sm text-sm font-light uppercase tracking-[0.25em] text-neutral-400">
-          Premium Asoebi Fabrics &amp; Materials
+        <p className="mt-6 max-w-md text-lg font-display italic text-brand-earth">
+          Every great outfit starts with great fabric
+        </p>
+        <p className="mt-3 text-xs uppercase tracking-[0.3em] text-brand-gold/70">
+          Curated by Ayodeji &mdash; Epe, Lagos
         </p>
         <div className="mt-12 flex flex-col gap-4 sm:flex-row">
           <Link
             href="/shop"
-            className="border border-white px-10 py-4 text-xs uppercase tracking-[0.3em] text-white transition-all hover:bg-white hover:text-black"
+            className="bg-brand-forest px-10 py-4 text-xs uppercase tracking-[0.3em] text-white transition-all hover:bg-brand-forest/90"
           >
             Shop All Fabrics
           </Link>
           <Link
-            href="/collections"
-            className="border border-white/30 px-10 py-4 text-xs uppercase tracking-[0.3em] text-white/60 transition-all hover:border-white hover:text-white"
+            href="/shop"
+            className="border border-brand-gold px-10 py-4 text-xs uppercase tracking-[0.3em] text-brand-gold transition-all hover:bg-brand-gold hover:text-white"
           >
             Browse Categories
           </Link>
@@ -96,24 +97,24 @@ export default async function Home() {
       </section>
 
       {/* Pillars strip */}
-      <section className="border-y border-neutral-200 bg-neutral-50 px-6 py-6 md:px-12">
-        <div className="flex flex-col items-center justify-center gap-4 text-center text-xs uppercase tracking-widest md:flex-row md:gap-12">
+      <section className="border-y border-brand-gold/20 bg-brand-cream px-6 py-6 md:px-12">
+        <div className="flex flex-col items-center justify-center gap-4 text-center text-xs uppercase tracking-widest text-brand-earth md:flex-row md:gap-12">
           <span>Sourced Globally</span>
-          <span className="hidden md:inline">·</span>
+          <span className="hidden md:inline text-brand-gold">·</span>
           <span>Sold in Epe, Lagos</span>
-          <span className="hidden md:inline">·</span>
+          <span className="hidden md:inline text-brand-gold">·</span>
           <span>Premium Fabrics</span>
         </div>
       </section>
 
       {/* Latest Arrivals */}
-      <section className="bg-white px-6 py-24 text-black md:px-12">
+      <section className="bg-white px-6 py-24 text-brand-dark md:px-12">
         <FadeIn>
           <div className="mb-12 flex items-end justify-between">
-            <h2 className="text-3xl font-light uppercase tracking-widest">Latest Arrivals</h2>
+            <h2 className="text-3xl font-display font-light uppercase tracking-widest">Latest Arrivals</h2>
             <Link
               href="/shop"
-              className="border-b border-black pb-1 text-sm uppercase tracking-widest transition-colors hover:text-neutral-500"
+              className="border-b border-brand-earth pb-1 text-sm uppercase tracking-widest transition-colors hover:text-brand-gold"
             >
               View All
             </Link>
@@ -138,42 +139,31 @@ export default async function Home() {
       </section>
 
       {/* Shop by Category */}
-      <section className="bg-neutral-50 px-6 py-24 text-black md:px-12">
+      <section className="bg-brand-cream px-6 py-24 text-brand-dark md:px-12">
         <FadeIn delay={0.1}>
           <div className="mb-12 flex items-end justify-between">
-            <h2 className="text-3xl font-light uppercase tracking-widest">Shop by Category</h2>
+            <h2 className="text-3xl font-display font-light uppercase tracking-widest">Shop by Category</h2>
             <Link
-              href="/collections"
-              className="border-b border-black pb-1 text-sm uppercase tracking-widest transition-colors hover:text-neutral-500"
+              href="/shop"
+              className="border-b border-brand-earth pb-1 text-sm uppercase tracking-widest transition-colors hover:text-brand-gold"
             >
               All Categories
             </Link>
           </div>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            {collections.map((collection) => (
-              <article key={collection.id} className="group">
-                <Link href={`/collections/${collection.slug}`} className="block">
-                  <div className="relative aspect-video overflow-hidden bg-neutral-900">
-                    {collection.cover_image ? (
-                      <Image
-                        src={collection.cover_image}
-                        alt={collection.name}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
-                      />
-                    ) : null}
-                    <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 to-transparent p-5">
-                      <h3 className="text-sm uppercase tracking-widest text-white">
-                        {collection.name}
-                      </h3>
-                    </div>
+            {categories.map((category) => (
+              <article key={category.id} className="group">
+                <Link href={`/shop/${category.slug}`} className="block">
+                  <div className="flex aspect-video items-center justify-center bg-brand-dark border border-transparent transition-all duration-300 group-hover:scale-[1.02] group-hover:border-brand-gold">
+                    <h3 className="text-sm uppercase tracking-widest text-white text-center">
+                      {category.name}
+                    </h3>
                   </div>
                 </Link>
               </article>
             ))}
           </div>
-          {collections.length === 0 && (
+          {categories.length === 0 && (
             <p className="mt-10 text-center text-sm uppercase tracking-widest text-neutral-500">
               Categories coming soon.
             </p>
@@ -182,9 +172,9 @@ export default async function Home() {
       </section>
 
       {/* Instagram CTA */}
-      <section className="bg-black py-20 text-center text-white">
+      <section className="bg-brand-dark py-20 text-center text-white">
         <FadeIn>
-          <h2 className="text-2xl font-light uppercase tracking-widest">Follow Us on Instagram</h2>
+          <h2 className="text-2xl font-display font-light uppercase tracking-widest">Follow Us on Instagram</h2>
           <p className="mt-4 text-sm text-neutral-400">
             New fabrics, asoebi sets, and behind-the-scenes — first on Instagram.
           </p>
@@ -192,7 +182,7 @@ export default async function Home() {
             href="https://instagram.com/3_15fabrics"
             target="_blank"
             rel="noreferrer"
-            className="mt-8 inline-block border border-white px-8 py-3 text-sm uppercase tracking-widest transition-colors hover:bg-white hover:text-black"
+            className="mt-8 inline-block border border-brand-gold px-8 py-3 text-sm uppercase tracking-widest text-brand-gold transition-colors hover:bg-brand-gold hover:text-white"
           >
             @3_15fabrics
           </a>
