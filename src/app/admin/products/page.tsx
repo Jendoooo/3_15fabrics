@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabaseBrowser } from '@/lib/supabase';
 import type { Category, Collection, Product } from '@/lib/types';
@@ -271,6 +271,9 @@ const buildPreview = (
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
+  const [priceSaving, setPriceSaving] = useState<Record<string, boolean>>({});
+  const [priceFeedback, setPriceFeedback] = useState<Record<string, string>>({});
 
   const [selectedCsvName, setSelectedCsvName] = useState('');
   const [csvPreviewRows, setCsvPreviewRows] = useState<PreviewRow[]>([]);
@@ -295,7 +298,14 @@ export default function AdminProductsPage() {
       .from('products')
       .select('*')
       .order('created_at', { ascending: false });
-    setProducts((data ?? []) as Product[]);
+    const nextProducts = (data ?? []) as Product[];
+    setProducts(nextProducts);
+    setPriceInputs((prev) =>
+      nextProducts.reduce<Record<string, string>>((acc, product) => {
+        acc[product.id] = prev[product.id] ?? String(product.price ?? 0);
+        return acc;
+      }, {})
+    );
     setLoading(false);
   }, []);
 
@@ -432,6 +442,79 @@ export default function AdminProductsPage() {
   };
 
   const formatNaira = (value: number) => `\u20A6${value.toLocaleString('en-NG')}`;
+
+  const handlePriceInputChange = (productId: string, value: string) => {
+    setPriceInputs((prev) => ({ ...prev, [productId]: value }));
+    setPriceFeedback((prev) => ({ ...prev, [productId]: '' }));
+  };
+
+  const handlePriceBlur = async (product: Product) => {
+    const rawValue = priceInputs[product.id]?.trim() ?? String(product.price);
+    const normalizedValue = rawValue.replace(/,/g, '');
+    const parsedPrice = Number(normalizedValue);
+
+    if (!normalizedValue || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setPriceInputs((prev) => ({ ...prev, [product.id]: String(product.price ?? 0) }));
+      setPriceFeedback((prev) => ({ ...prev, [product.id]: 'Enter a valid price.' }));
+      return;
+    }
+
+    if (parsedPrice === product.price) {
+      setPriceInputs((prev) => ({ ...prev, [product.id]: String(product.price ?? 0) }));
+      return;
+    }
+
+    setPriceSaving((prev) => ({ ...prev, [product.id]: true }));
+    setPriceFeedback((prev) => ({ ...prev, [product.id]: '' }));
+
+    try {
+      const response = await fetch(`/api/admin/products/${product.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price: parsedPrice }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(payload?.error ?? 'Could not update price.');
+      }
+
+      setProducts((prev) =>
+        prev.map((existing) =>
+          existing.id === product.id
+            ? {
+              ...existing,
+              price: parsedPrice,
+            }
+            : existing
+        )
+      );
+      setPriceInputs((prev) => ({ ...prev, [product.id]: String(parsedPrice) }));
+      setPriceFeedback((prev) => ({ ...prev, [product.id]: 'Saved' }));
+      setTimeout(() => {
+        setPriceFeedback((prev) =>
+          prev[product.id] === 'Saved'
+            ? {
+              ...prev,
+              [product.id]: '',
+            }
+            : prev
+        );
+      }, 1600);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not update price.';
+      setPriceFeedback((prev) => ({ ...prev, [product.id]: message }));
+      setPriceInputs((prev) => ({ ...prev, [product.id]: String(product.price ?? 0) }));
+    } finally {
+      setPriceSaving((prev) => ({ ...prev, [product.id]: false }));
+    }
+  };
+
+  const handlePriceKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.currentTarget.blur();
+    }
+  };
 
   return (
     <div className="p-5 md:p-8">
@@ -571,7 +654,31 @@ export default function AdminProductsPage() {
                   <p className="uppercase">{product.unit_type === 'bundle' ? 'Bundle' : 'Per Yard'}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-2 sm:items-end">
+                <label className="text-[10px] uppercase tracking-widest text-neutral-500" htmlFor={`price-${product.id}`}>
+                  Price
+                </label>
+                <input
+                  id={`price-${product.id}`}
+                  type="number"
+                  min={0}
+                  step={100}
+                  value={priceInputs[product.id] ?? String(product.price ?? 0)}
+                  onChange={(event) => handlePriceInputChange(product.id, event.target.value)}
+                  onBlur={() => void handlePriceBlur(product)}
+                  onKeyDown={handlePriceKeyDown}
+                  disabled={priceSaving[product.id] ?? false}
+                  className="w-32 border border-neutral-300 px-2 py-1 text-sm text-right focus:border-black focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                />
+                {priceFeedback[product.id] ? (
+                  <p
+                    className={`text-[10px] uppercase tracking-widest ${priceFeedback[product.id] === 'Saved' ? 'text-green-600' : 'text-red-500'
+                      }`}
+                  >
+                    {priceFeedback[product.id]}
+                  </p>
+                ) : null}
+                <div className="flex items-center gap-3">
                 <Link
                   href={`/admin/products/${product.id}`}
                   className="text-xs uppercase tracking-widest text-neutral-500 underline hover:text-black"
@@ -585,6 +692,7 @@ export default function AdminProductsPage() {
                 >
                   Delete
                 </button>
+                </div>
               </div>
             </div>
           ))}

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'Our Story — 3:15 Fabrics',
@@ -23,15 +24,33 @@ export default function BrandPage() {
       </section>
 
       {/* Intro */}
-      <section className="mx-auto max-w-3xl px-6 py-20 text-center md:px-12">
-        <p className="text-lg leading-relaxed text-neutral-700 md:text-xl">
-          <strong className="font-semibold text-black">3:15 Fabrics</strong> is a fabric store
-          based in Epe, Lagos, founded by{' '}
-          <strong className="font-semibold text-black">Ayodeji Modinat Ayeola-Musari</strong>.
-          With over 8 years in the fabric business, Ayodeji has built a reputation for sourcing
-          the finest Ankara, French Lace, Swiss Voile, Aso-Oke, Senator material, and more —
-          from markets in China, India, and across Nigeria.
-        </p>
+      <section className="mx-auto max-w-6xl px-6 py-20 md:px-12">
+        <div className="grid grid-cols-1 items-center gap-12 md:grid-cols-2">
+          <div className="order-2 md:order-1">
+            <h2 className="mb-6 text-3xl font-display font-light uppercase tracking-widest text-brand-dark">
+              Our Founder
+            </h2>
+            <p className="mb-6 text-lg leading-relaxed text-neutral-700 md:text-xl">
+              <strong className="font-semibold text-brand-earth">3:15 Fabrics</strong> is a fabric store
+              based in Epe, Lagos, founded by{' '}
+              <strong className="font-semibold text-brand-earth">Ayodeji Modinat Ayeola-Musari</strong>.
+            </p>
+            <p className="text-lg leading-relaxed text-neutral-700 md:text-xl">
+              With over 8 years in the fabric business, Ayodeji has built a reputation for sourcing
+              the finest Ankara, French Lace, Swiss Voile, Aso-Oke, Senator material, and more —
+              from markets in China, India, and across Nigeria.
+            </p>
+          </div>
+          <div className="order-1 relative aspect-[4/5] overflow-hidden border border-brand-gold/30 shadow-xl md:order-2">
+            <Image
+              src="/images/founder.jpg"
+              alt="Ayodeji Modinat Ayeola-Musari - Founder of 3:15 Fabrics"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+          </div>
+        </div>
       </section>
 
       {/* Philosophy */}

@@ -73,33 +73,48 @@ export default async function Home() {
 
   return (
     <main className="bg-white">
-      {/* Hero — warm brand identity */}
-      <section className="flex min-h-screen flex-col items-center justify-center bg-brand-cream px-6 text-center">
-        <p className="mb-6 text-[10px] uppercase tracking-[0.5em] text-brand-gold">
-          Est. Epe, Lagos
-        </p>
-        <h1 className="font-display font-light uppercase leading-none tracking-[0.08em] text-brand-dark text-[clamp(3rem,11vw,8rem)]">
-          3:15 Fabrics
-        </h1>
-        <p className="mt-6 max-w-md text-lg font-display italic text-brand-earth">
-          Every great outfit starts with great fabric
-        </p>
-        <p className="mt-3 text-xs uppercase tracking-[0.3em] text-brand-gold">
-          Curated by Ayodeji &mdash; Epe, Lagos
-        </p>
-        <div className="mt-12 flex flex-col gap-4 sm:flex-row">
-          <Link
-            href="/shop"
-            className="bg-brand-forest px-10 py-4 text-xs uppercase tracking-[0.3em] text-white transition-all hover:bg-brand-forest/90"
-          >
-            Shop All Fabrics
-          </Link>
-          <Link
-            href="/shop"
-            className="border border-brand-gold px-10 py-4 text-xs uppercase tracking-[0.3em] text-brand-gold transition-all hover:bg-brand-gold hover:text-white"
-          >
-            Browse Categories
-          </Link>
+      {/* Hero — warm brand identity with fabric background */}
+      <section className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/hero-fabric.jpg"
+            alt="Premium African Fabrics"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center">
+          <p className="mb-6 text-[10px] uppercase tracking-[0.5em] text-brand-gold">
+            Est. Epe, Lagos
+          </p>
+          <h1 className="font-display font-light uppercase leading-none tracking-[0.08em] text-white text-[clamp(3rem,11vw,8rem)]">
+            3:15 Fabrics
+          </h1>
+          <p className="mt-6 max-w-md text-lg font-display italic text-brand-cream">
+            Every great outfit starts with great fabric
+          </p>
+          <p className="mt-3 text-xs uppercase tracking-[0.3em] text-brand-gold">
+            Curated by Ayodeji &mdash; Epe, Lagos
+          </p>
+          <div className="mt-12 flex flex-col gap-4 sm:flex-row">
+            <Link
+              href="/shop"
+              className="bg-brand-forest px-10 py-4 text-xs uppercase tracking-[0.3em] text-white transition-all hover:bg-brand-forest/90"
+            >
+              Shop All Fabrics
+            </Link>
+            <Link
+              href="/collections"
+              className="border border-brand-gold bg-black/40 px-10 py-4 text-xs uppercase tracking-[0.3em] text-brand-gold backdrop-blur-sm transition-all hover:bg-brand-gold hover:text-white"
+            >
+              Browse Categories
+            </Link>
+          </div>
         </div>
       </section>
 

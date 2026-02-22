@@ -217,8 +217,8 @@ export default function ProductPurchasePanel({
                 onClick={() => setSelectedVariantId(variant.id)}
                 disabled={isOutOfStock || productStatus === 'sold_out'}
                 className={`min-w-24 border px-4 py-3 text-sm uppercase tracking-widest transition-colors ${isSelected
-                    ? 'border-black bg-black text-white'
-                    : 'border-black text-black hover:bg-black hover:text-white'
+                  ? 'border-black bg-black text-white'
+                  : 'border-black text-black hover:bg-black hover:text-white'
                   } ${isOutOfStock || productStatus === 'sold_out' ? 'cursor-not-allowed opacity-50' : ''}`}
               >
                 {variant.color ?? 'Default'}
@@ -279,7 +279,7 @@ export default function ProductPurchasePanel({
         type="button"
         disabled={isSoldOut}
         onClick={handleAddToCart}
-        className="w-full bg-black py-4 text-sm uppercase tracking-widest text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600"
+        className="w-full bg-brand-forest py-4 text-sm uppercase tracking-widest text-white transition-colors hover:bg-brand-forest/90 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600"
       >
         {buttonLabel}
       </button>

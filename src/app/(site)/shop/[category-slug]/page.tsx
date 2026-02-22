@@ -76,16 +76,24 @@ export default async function CategoryPage({
         </h1>
         <Link
           href="/shop"
-          className="border-b border-black pb-1 text-sm uppercase tracking-widest transition-colors hover:text-neutral-500"
+          className="border-b border-brand-earth pb-1 text-sm uppercase tracking-widest text-brand-dark transition-colors hover:text-brand-gold"
         >
           Back to Shop
         </Link>
       </div>
 
       {categoryProducts.length === 0 ? (
-        <p className="py-12 text-center text-sm uppercase tracking-widest text-neutral-500">
-          No products in this category yet.
-        </p>
+        <div className="flex flex-col items-center justify-center rounded-sm border border-brand-gold/20 bg-brand-cream py-20 text-center">
+          <p className="mb-4 text-sm uppercase tracking-widest text-brand-earth">
+            No products in this category yet.
+          </p>
+          <Link
+            href="/shop"
+            className="border-b border-brand-forest pb-1 text-xs uppercase tracking-widest text-brand-forest transition-colors hover:text-brand-gold"
+          >
+            Shop All Fabrics
+          </Link>
+        </div>
       ) : (
         <div className="grid grid-cols-2 gap-x-8 gap-y-16 lg:grid-cols-4">
           {categoryProducts.map((product) => {

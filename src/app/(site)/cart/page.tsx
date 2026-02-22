@@ -109,10 +109,10 @@ export default function CartPage() {
 
   if (!mounted) {
     return (
-      <main className="mx-auto min-h-screen max-w-7xl bg-white px-6 py-24 text-black md:px-12">
-        <h1 className="mb-12 text-4xl font-light uppercase tracking-widest md:text-5xl">Your Cart</h1>
-        <div className="flex justify-center border border-neutral-200 px-6 py-10 text-center">
-          <span className="text-sm uppercase tracking-widest text-neutral-400">Loading Cart...</span>
+      <main className="mx-auto min-h-screen max-w-7xl px-6 py-24 text-brand-dark md:px-12">
+        <h1 className="mb-12 text-4xl font-display font-light uppercase tracking-widest md:text-5xl">Your Cart</h1>
+        <div className="flex justify-center border border-brand-gold/20 bg-brand-cream px-6 py-10 text-center">
+          <span className="text-sm uppercase tracking-widest text-brand-earth">Loading Cart...</span>
         </div>
       </main>
     );
@@ -120,13 +120,13 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <main className="mx-auto min-h-screen max-w-7xl bg-white px-6 py-24 text-black md:px-12">
-        <h1 className="mb-12 text-4xl font-light uppercase tracking-widest md:text-5xl">Your Cart</h1>
-        <div className="border border-neutral-200 px-6 py-10 text-center">
-          <p className="text-sm uppercase tracking-widest text-neutral-600">Your cart is empty</p>
+      <main className="mx-auto min-h-screen max-w-7xl px-6 py-24 text-brand-dark md:px-12">
+        <h1 className="mb-12 text-4xl font-display font-light uppercase tracking-widest md:text-5xl">Your Cart</h1>
+        <div className="border border-brand-gold/20 bg-brand-cream px-6 py-10 text-center">
+          <p className="text-sm uppercase tracking-widest text-brand-earth">Your cart is empty</p>
           <Link
             href="/shop"
-            className="mt-6 inline-block bg-black px-6 py-3 text-sm uppercase tracking-widest text-white transition-colors hover:bg-neutral-800"
+            className="mt-6 inline-block bg-brand-forest px-6 py-3 text-sm uppercase tracking-widest text-white transition-colors hover:bg-brand-forest/90"
           >
             Continue Shopping
           </Link>
@@ -137,8 +137,8 @@ export default function CartPage() {
 
   return (
     <>
-      <main className="mx-auto min-h-screen max-w-7xl bg-white px-6 py-24 text-black md:px-12">
-        <h1 className="mb-12 text-4xl font-light uppercase tracking-widest md:text-5xl">Your Cart</h1>
+      <main className="mx-auto min-h-screen max-w-7xl px-6 py-24 text-brand-dark md:px-12">
+        <h1 className="mb-12 text-4xl font-display font-light uppercase tracking-widest md:text-5xl">Your Cart</h1>
 
         {recoveryState === 'success' && recoveryMessage ? (
           <div className="mb-6 border border-green-200 bg-green-50 px-4 py-3 text-xs uppercase tracking-widest text-green-700">
@@ -215,8 +215,14 @@ export default function CartPage() {
                       <div className="flex items-center border border-neutral-300">
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item.variant_id, item.quantity - 1)}
-                          className="h-9 w-9 text-lg text-neutral-700 transition-colors hover:bg-neutral-100"
+                          onClick={() => {
+                            const minAllowed = item.unit_type === 'yard' ? (item.minimum_quantity ?? 1) : 1;
+                            if (item.quantity > minAllowed) {
+                              updateQuantity(item.variant_id, item.quantity - (item.unit_type === 'yard' ? 0.5 : 1));
+                            }
+                          }}
+                          disabled={item.quantity <= (item.unit_type === 'yard' ? (item.minimum_quantity ?? 1) : 1)}
+                          className="flex h-9 w-9 items-center justify-center text-lg text-neutral-700 transition-colors hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           -
                         </button>
@@ -225,8 +231,8 @@ export default function CartPage() {
                         </span>
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item.variant_id, item.quantity + 1)}
-                          className="h-9 w-9 text-lg text-neutral-700 transition-colors hover:bg-neutral-100"
+                          onClick={() => updateQuantity(item.variant_id, item.quantity + (item.unit_type === 'yard' ? 0.5 : 1))}
+                          className="flex h-9 w-9 items-center justify-center text-lg text-neutral-700 transition-colors hover:bg-neutral-100"
                         >
                           +
                         </button>
@@ -250,8 +256,8 @@ export default function CartPage() {
             </div>
           </div>
 
-          <div className="h-max bg-neutral-50 p-8 lg:sticky lg:top-24">
-            <h2 className="mb-6 text-xl font-light uppercase tracking-widest">Order Summary</h2>
+          <div className="h-max bg-brand-cream border border-brand-gold/20 p-8 lg:sticky lg:top-24">
+            <h2 className="mb-6 text-xl font-display font-light uppercase tracking-widest">Order Summary</h2>
             <div className="mb-8 space-y-4 text-sm">
               <div className="flex justify-between">
                 <span>Subtotal</span>
@@ -265,7 +271,7 @@ export default function CartPage() {
             </div>
             <Link
               href="/checkout"
-              className="block w-full bg-black py-4 text-center text-sm uppercase tracking-widest text-white transition-colors hover:bg-neutral-800"
+              className="block w-full bg-brand-forest py-4 text-center text-sm uppercase tracking-widest text-white transition-colors hover:bg-brand-forest/90"
             >
               Proceed to Checkout
             </Link>

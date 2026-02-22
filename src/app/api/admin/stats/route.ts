@@ -15,18 +15,24 @@ export async function GET() {
 
         const today = new Date();
         today.setUTCHours(0, 0, 0, 0);
+        const monthStart = new Date(today);
+        monthStart.setUTCDate(1);
 
         const [
             { data: revenueData },
             { count: totalOrders },
             { count: totalProducts },
             { count: todayOrders },
+            { count: thisMonthOrders },
+            { count: pendingOrders },
             { count: totalContacts }
         ] = await Promise.all([
             supabaseServer.from('orders').select('total').eq('payment_status', 'paid'),
             supabaseServer.from('orders').select('*', { count: 'exact', head: true }),
-            supabaseServer.from('products').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+            supabaseServer.from('products').select('*', { count: 'exact', head: true }),
             supabaseServer.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
+            supabaseServer.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', monthStart.toISOString()),
+            supabaseServer.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
             supabaseServer.from('contacts').select('*', { count: 'exact', head: true })
         ]);
 
@@ -37,6 +43,8 @@ export async function GET() {
             totalOrders: totalOrders || 0,
             totalProducts: totalProducts || 0,
             todayOrders: todayOrders || 0,
+            thisMonthOrders: thisMonthOrders || 0,
+            pendingOrders: pendingOrders || 0,
             totalContacts: totalContacts || 0,
         });
     } catch (error) {

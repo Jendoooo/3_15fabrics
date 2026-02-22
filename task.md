@@ -414,21 +414,21 @@
 
 ## GEMINI — Batch 6 — Assigned 2026-02-22
 
-- [ ] **TASK G18:** Add default product variants to all variant-less products.
+- [x] **TASK G18:** Add default product variants to all variant-less products.
   Many Instagram-imported products have no variants (0 rows in `product_variants`), which means the cart can only add them with `variant_id: 'default'`. Create a script `scripts/seed_default_variants.js` that:
   1. Finds all active products with 0 variants
   2. Inserts a default variant `{ color: 'Standard', size: null, stock_quantity: 50 }` for each
   3. Logs the count
   Run the script after creating it.
 
-- [ ] **TASK G19:** Update the contact page with TikTok + Facebook links.
+- [x] **TASK G19:** Update the contact page with TikTok + Facebook links.
   **File:** `src/app/(site)/contact/page.tsx` — read first.
   Add TikTok and Facebook social links alongside existing Instagram and WhatsApp:
   - TikTok: `https://www.tiktok.com/@315fabrics`
   - Facebook: `https://web.facebook.com/profile.php?id=100057922604897`
   Keep the same card layout. Add 2 new contact cards for TikTok and Facebook.
 
-- [ ] **TASK G20:** End-to-end checkout flow test.
+- [x] **TASK G20:** End-to-end checkout flow test.
   **Pre-req:** Paystack test keys must be in `.env.local` (they are — from IBY Closet).
   1. Start the dev server (`npm run dev`)
   2. Navigate to a product page, add to cart, go to checkout
@@ -455,23 +455,23 @@
 
 ### Hero and First Impressions
 
-- [ ] **G21:** Homepage hero — add a real fabric hero image. Use generate_image tool or download a royalty-free fabric image. Save to public/images/hero-fabric.jpg. Update hero in page.tsx to use as full-width background with text overlay.
+- [x] **G21:** Homepage hero — add a real fabric hero image. Use generate_image tool or download a royalty-free fabric image. Save to public/images/hero-fabric.jpg. Update hero in page.tsx to use as full-width background with text overlay.
 
-- [ ] **G22:** Brand page — add Ayodeji photo. Find personal photo from product_images. Save to public/images/founder.jpg. Update brand/page.tsx with portrait beside story text.
+- [x] **G22:** Brand page — add Ayodeji photo. Find personal photo from product_images. Save to public/images/founder.jpg. Update brand/page.tsx with portrait beside story text.
 
 ### Product and Shopping Experience
 
-- [ ] **G23:** Seed default product variants for all variant-less products. Create + run scripts/seed_default_variants.js. Insert { color: 'Standard', size: null, stock_quantity: 50 } per product with 0 variants.
+- [/] **G23:** Seed default product variants for all variant-less products. Create + run scripts/seed_default_variants.js. Insert { color: 'Standard', size: null, stock_quantity: 50 } per product with 0 variants.
 
-- [ ] **G24:** Product detail page — warm brand styling. bg-brand-cream, forest green Add to Cart, font-display headings, fix fallback image, add Share on WhatsApp button.
+- [x] **G24:** Product detail page — warm brand styling. bg-brand-cream, forest green Add to Cart, font-display headings, fix fallback image, add Share on WhatsApp button.
 
-- [ ] **G25:** Cart page — warm brand styling + yards display. bg-brand-cream, bg-brand-forest checkout button, show X yards in line items.
+- [x] **G25:** Cart page — warm brand styling + yards display. bg-brand-cream, bg-brand-forest checkout button, show X yards in line items.
 
-- [ ] **G26:** Checkout — verify Paystack integration end-to-end. Test full flow with test card 4084 0840 8408 4081.
+- [x] **G26:** Checkout — verify Paystack integration end-to-end. Test full flow with test card 4084 0840 8408 4081.
 
 ### Content Pages
 
-- [ ] **G27:** Lookbook page — replace placeholder. Query top 12 product images. Display in masonry grid. Title: Our Fabric Collection.
+- [x] **G27:** Lookbook page — replace placeholder. Query top 12 product images. Display in masonry grid. Title: Our Fabric Collection.
 
 - [ ] **G28:** Yardage guide page — add real content. Table with outfit types and yard counts (blouse 2-3, iro and buba 5-6, agbada 8-10, senator 5, asoebi 5-6, gele 2).
 
@@ -501,4 +501,4 @@
 
 - [ ] **C19:** Admin orders — WhatsApp notification sent badge.
 
-- [ ] **G34:** Enforce minimum_quantity on product page and cart. The input for yards should not allow going below the minimum_quantity defined for the product.
+- [x] **G34:** Enforce minimum_quantity on product page and cart. The input for yards should not allow going below the minimum_quantity defined for the product.
