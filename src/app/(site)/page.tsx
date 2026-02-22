@@ -12,57 +12,63 @@ type FabricCategory = Pick<Category, 'id' | 'name' | 'slug'>;
 type ProductPrimaryImage = Pick<ProductImage, 'product_id' | 'image_url' | 'sort_order'>;
 
 export default async function Home() {
-  const { products, productImageMap, categories } = await cachedFetch(
-    'home:featured',
-    async () => {
-      const { data: featuredProducts, error: featuredProductsError } = await supabaseServer
-        .from('products')
-        .select('id, name, slug, price')
-        .eq('is_featured', true)
-        .eq('status', 'active')
-        .limit(6);
+  let products: FeaturedProduct[] = [];
+  let productImageMap: Record<string, string> = {};
+  let categories: FabricCategory[] = [];
 
-      if (featuredProductsError) throw new Error(featuredProductsError.message);
+  try {
+    const data = await cachedFetch(
+      'home:featured',
+      async () => {
+        const { data: featuredProducts } = await supabaseServer
+          .from('products')
+          .select('id, name, slug, price')
+          .eq('is_featured', true)
+          .eq('status', 'active')
+          .limit(6);
 
-      const products = (featuredProducts ?? []) as FeaturedProduct[];
-      const productIds = products.map((p) => p.id);
+        const prods = (featuredProducts ?? []) as FeaturedProduct[];
+        const productIds = prods.map((p) => p.id);
 
-      let productImageMap: Record<string, string> = {};
-      if (productIds.length > 0) {
-        const { data: productImages, error: productImagesError } = await supabaseServer
-          .from('product_images')
-          .select('product_id, image_url, sort_order')
-          .in('product_id', productIds)
-          .eq('is_primary', true)
-          .order('sort_order', { ascending: true });
+        let imgMap: Record<string, string> = {};
+        if (productIds.length > 0) {
+          const { data: productImages } = await supabaseServer
+            .from('product_images')
+            .select('product_id, image_url, sort_order')
+            .in('product_id', productIds)
+            .eq('is_primary', true)
+            .order('sort_order', { ascending: true });
 
-        if (productImagesError) throw new Error(productImagesError.message);
+          imgMap = ((productImages ?? []) as ProductPrimaryImage[]).reduce<Record<string, string>>(
+            (acc, img) => {
+              if (img.product_id && !acc[img.product_id]) acc[img.product_id] = img.image_url;
+              return acc;
+            },
+            {}
+          );
+        }
 
-        productImageMap = ((productImages ?? []) as ProductPrimaryImage[]).reduce<Record<string, string>>(
-          (acc, img) => {
-            if (img.product_id && !acc[img.product_id]) acc[img.product_id] = img.image_url;
-            return acc;
-          },
-          {}
-        );
-      }
+        const { data: featuredCategories } = await supabaseServer
+          .from('categories')
+          .select('id, name, slug')
+          .order('sort_order', { ascending: true })
+          .limit(6);
 
-      const { data: featuredCategories, error: featuredCategoriesError } = await supabaseServer
-        .from('categories')
-        .select('id, name, slug')
-        .order('sort_order', { ascending: true })
-        .limit(6);
+        return {
+          products: prods,
+          productImageMap: imgMap,
+          categories: (featuredCategories ?? []) as FabricCategory[],
+        };
+      },
+      300
+    );
 
-      if (featuredCategoriesError) throw new Error(featuredCategoriesError.message);
-
-      return {
-        products,
-        productImageMap,
-        categories: (featuredCategories ?? []) as FabricCategory[],
-      };
-    },
-    300
-  );
+    products = data.products;
+    productImageMap = data.productImageMap;
+    categories = data.categories;
+  } catch (err) {
+    console.error('[Homepage] Failed to load featured data:', err);
+  }
 
   return (
     <main className="bg-white">
