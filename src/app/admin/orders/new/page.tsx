@@ -195,6 +195,8 @@ export default function ManualOrderEntryPage() {
                                 <select value={source} onChange={e => setSource(e.target.value)} className="w-full border border-neutral-300 p-2 text-sm bg-white">
                                     <option value="instagram">Instagram</option>
                                     <option value="whatsapp">WhatsApp</option>
+                                    <option value="tiktok">TikTok</option>
+                                    <option value="facebook">Facebook</option>
                                     <option value="walk_in">Walk-in</option>
                                     <option value="other">Other</option>
                                 </select>

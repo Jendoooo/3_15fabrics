@@ -58,7 +58,7 @@ export async function PATCH(
       order_id: params.id,
       status,
       note: note?.trim() || null,
-      updated_by: 'ibrahim',
+      updated_by: 'admin',
     });
 
     // 4. Notify customer — run in parallel, don't fail the response if these error

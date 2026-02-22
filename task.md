@@ -500,3 +500,5 @@
 - [ ] **C18:** Admin dashboard — summary cards (total products, orders this month, revenue, pending orders).
 
 - [ ] **C19:** Admin orders — WhatsApp notification sent badge.
+
+- [ ] **G34:** Enforce minimum_quantity on product page and cart. The input for yards should not allow going below the minimum_quantity defined for the product.
