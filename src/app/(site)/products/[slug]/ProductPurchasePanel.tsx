@@ -126,14 +126,70 @@ export default function ProductPurchasePanel({
   if (hasNoVariants) {
     return (
       <div className="space-y-4">
-        <a
-          href={whatsappHref}
-          target="_blank"
-          rel="noreferrer"
-          className="block w-full bg-black py-4 text-center text-sm uppercase tracking-widest text-white transition-colors hover:bg-neutral-800"
+        {unitType === 'yard' ? (
+          <div>
+            <label htmlFor="yards-no-variant" className="mb-3 block text-sm uppercase tracking-wider">
+              Yards
+            </label>
+            <input
+              id="yards-no-variant"
+              type="number"
+              min={minimumQuantity}
+              step={0.5}
+              value={yards}
+              onChange={(event) => {
+                const parsedValue = parseFloat(event.target.value);
+                if (Number.isNaN(parsedValue)) {
+                  setYards(minimumQuantity);
+                  return;
+                }
+                setYards(Math.max(parsedValue, minimumQuantity));
+              }}
+              className="w-full border border-black px-4 py-3 text-sm focus:outline-none"
+            />
+            <p className="mt-3 text-sm text-neutral-700">
+              {`${yards} yards × ₦${unitPrice.toLocaleString('en-NG')} = ₦${(yards * unitPrice).toLocaleString('en-NG')}`}
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm uppercase tracking-wider text-neutral-700">
+            {`Complete set — ${minimumQuantity} yards`}
+          </p>
+        )}
+
+        <button
+          type="button"
+          disabled={productStatus === 'sold_out'}
+          onClick={() => {
+            addItem({
+              product_id: productId,
+              slug: productSlug,
+              variant_id: 'default',
+              product_name: productName,
+              size: '',
+              color: 'Standard',
+              unit_price: unitPrice,
+              quantity: unitType === 'bundle' ? 1 : yards,
+              image_url: primaryImageUrl ?? '',
+              unit_type: unitType,
+              minimum_quantity: minimumQuantity,
+            });
+          }}
+          className="w-full bg-brand-forest py-4 text-sm uppercase tracking-widest text-white transition-colors hover:bg-brand-forest/90 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600"
         >
-          Enquire on WhatsApp
-        </a>
+          {productStatus === 'sold_out' ? 'Sold Out' : unitType === 'bundle' ? 'Order This Bundle' : 'Add to Cart'}
+        </button>
+
+        {whatsappNumber && (
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noreferrer"
+            className="block w-full border border-brand-gold py-3 text-center text-xs uppercase tracking-widest text-brand-gold transition-colors hover:bg-brand-gold hover:text-white"
+          >
+            Or Enquire on WhatsApp
+          </a>
+        )}
       </div>
     );
   }
@@ -160,11 +216,10 @@ export default function ProductPurchasePanel({
                 type="button"
                 onClick={() => setSelectedVariantId(variant.id)}
                 disabled={isOutOfStock || productStatus === 'sold_out'}
-                className={`min-w-24 border px-4 py-3 text-sm uppercase tracking-widest transition-colors ${
-                  isSelected
+                className={`min-w-24 border px-4 py-3 text-sm uppercase tracking-widest transition-colors ${isSelected
                     ? 'border-black bg-black text-white'
                     : 'border-black text-black hover:bg-black hover:text-white'
-                } ${isOutOfStock || productStatus === 'sold_out' ? 'cursor-not-allowed opacity-50' : ''}`}
+                  } ${isOutOfStock || productStatus === 'sold_out' ? 'cursor-not-allowed opacity-50' : ''}`}
               >
                 {variant.color ?? 'Default'}
               </button>
